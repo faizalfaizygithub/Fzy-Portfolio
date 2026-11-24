@@ -1,0 +1,9 @@
+{
+  "name": "fzy_portfolio",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "firebase": "^13.4.0"
+  }
+}
