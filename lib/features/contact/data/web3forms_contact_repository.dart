@@ -18,8 +18,9 @@ class Web3FormsContactRepository implements ContactRepository {
     http.Client? client,
     String? accessKey,
     this.timeout = const Duration(seconds: 20),
-  })  : _client = client ?? http.Client(),
-        _accessKey = accessKey ?? const String.fromEnvironment('WEB3FORMS_ACCESS_KEY');
+  }) : _client = client ?? http.Client(),
+       _accessKey =
+           accessKey ?? const String.fromEnvironment('WEB3FORMS_ACCESS_KEY');
 
   static final _endpoint = Uri.parse('https://api.web3forms.com/submit');
 
@@ -67,7 +68,9 @@ class Web3FormsContactRepository implements ContactRepository {
       if (response.statusCode == 200 && body?['success'] == true) {
         return const ContactSuccess();
       }
-      debugPrint('Contact form failed: ${response.statusCode} ${response.body}');
+      debugPrint(
+        'Contact form failed: ${response.statusCode} ${response.body}',
+      );
       return const ContactFailure(
         'Your message couldn\'t be delivered. Please try again or email me directly.',
       );

@@ -22,6 +22,10 @@ class NavigationProvider extends ChangeNotifier {
   AppSection _activeSection = AppSection.home;
   bool _isScrolled = false;
   bool _showBackToTop = false;
+  bool _pastHero = false;
+  bool _navHidden = false;
+  bool _menuOpen = false;
+  double _lastOffset = 0;
 
   /// Section the user picked; keeps it highlighted during the animated scroll
   /// instead of flickering through the sections in between.
@@ -30,6 +34,19 @@ class NavigationProvider extends ChangeNotifier {
   AppSection get activeSection => _activeSection;
   bool get isScrolled => _isScrolled;
   bool get showBackToTop => _showBackToTop;
+
+  /// True once the white hero has scrolled under the header.
+  bool get pastHero => _pastHero;
+
+  /// Header hides while scrolling down the page and returns on scroll up.
+  bool get navHidden => _navHidden && !_menuOpen;
+  bool get menuOpen => _menuOpen;
+
+  void setMenuOpen(bool open) {
+    if (open == _menuOpen) return;
+    _menuOpen = open;
+    notifyListeners();
+  }
 
   GlobalKey keyFor(AppSection section) => _keys[section]!;
 
@@ -45,6 +62,24 @@ class NavigationProvider extends ChangeNotifier {
     }
 
     final viewport = scrollController.position.viewportDimension;
+
+    final pastHero = offset > viewport - 72;
+    if (pastHero != _pastHero) {
+      _pastHero = pastHero;
+      changed = true;
+    }
+
+    // Ignore tiny jitters; only hide after leaving the hero.
+    final delta = offset - _lastOffset;
+    if (delta.abs() > 6) {
+      final hidden = _pendingTarget == null && delta > 0 && offset > viewport;
+      if (hidden != _navHidden) {
+        _navHidden = hidden;
+        changed = true;
+      }
+      _lastOffset = offset;
+    }
+
     final backToTop = offset > viewport * 0.8;
     if (backToTop != _showBackToTop) {
       _showBackToTop = backToTop;

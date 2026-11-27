@@ -87,7 +87,10 @@ class _TopBar extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [AppColors.background, AppColors.background.withValues(alpha: 0)],
+          colors: [
+            AppColors.background,
+            AppColors.background.withValues(alpha: 0),
+          ],
         ),
       ),
       child: Row(
@@ -102,7 +105,9 @@ class _TopBar extends StatelessWidget {
                 vertical: AppSpacing.xs + 2,
               ),
               decoration: BoxDecoration(
-                color: hovered ? AppColors.card : AppColors.card.withValues(alpha: 0.6),
+                color: hovered
+                    ? AppColors.card
+                    : AppColors.card.withValues(alpha: 0.6),
                 borderRadius: AppRadius.button,
                 border: Border.all(
                   color: hovered ? AppColors.highlight : AppColors.border,
@@ -117,7 +122,10 @@ class _TopBar extends StatelessWidget {
                     child: const Icon(Icons.arrow_back_rounded, size: 18),
                   ),
                   const SizedBox(width: AppSpacing.xs),
-                  Text('All projects', style: Theme.of(context).textTheme.labelLarge),
+                  Text(
+                    'All projects',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
                 ],
               ),
             ),
@@ -156,7 +164,9 @@ class _Header extends StatelessWidget {
       ),
       child: Padding(
         padding: EdgeInsets.only(
-          top: AppSizes.navHeight + context.responsive<double>(mobile: 32, desktop: 72),
+          top:
+              AppSizes.navHeight +
+              context.responsive<double>(mobile: 32, desktop: 72),
           bottom: AppSpacing.xxl,
         ),
         child: Column(
@@ -168,8 +178,10 @@ class _Header extends StatelessWidget {
                 runSpacing: AppSpacing.xs,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  Text('// ${project.number}',
-                      style: theme.labelSmall?.copyWith(color: project.accent)),
+                  Text(
+                    '// ${project.number}',
+                    style: theme.labelSmall?.copyWith(color: project.accent),
+                  ),
                   TagChip(project.category, accent: project.accent),
                 ],
               ),
@@ -180,7 +192,11 @@ class _Header extends StatelessWidget {
               child: GradientText(
                 project.name,
                 gradient: LinearGradient(
-                  colors: [AppColors.textPrimary, project.accent, AppColors.highlight],
+                  colors: [
+                    AppColors.textPrimary,
+                    project.accent,
+                    AppColors.highlight,
+                  ],
                 ),
                 style: context.responsive(
                   mobile: theme.displaySmall,
@@ -234,14 +250,20 @@ class _Gallery extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: context.horizontalPadding),
       padding: EdgeInsets.symmetric(
-        vertical: context.responsive<double>(mobile: AppSpacing.xl, desktop: AppSpacing.xxxl),
+        vertical: context.responsive<double>(
+          mobile: AppSpacing.xl,
+          desktop: AppSpacing.xxxl,
+        ),
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.border),
         gradient: RadialGradient(
           radius: 1.1,
-          colors: [project.accent.withValues(alpha: 0.12), AppColors.backgroundAlt],
+          colors: [
+            project.accent.withValues(alpha: 0.12),
+            AppColors.backgroundAlt,
+          ],
         ),
       ),
       child: Column(
@@ -326,7 +348,10 @@ class _Details extends StatelessWidget {
     );
 
     return SectionContainer(
-      verticalPadding: context.responsive<double>(mobile: AppSpacing.xxl, desktop: AppSpacing.xxxl + 16),
+      verticalPadding: context.responsive<double>(
+        mobile: AppSpacing.xxl,
+        desktop: AppSpacing.xxxl + 16,
+      ),
       child: context.isDesktop
           ? Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -359,7 +384,11 @@ class _Details extends StatelessWidget {
 }
 
 class _Panel extends StatelessWidget {
-  const _Panel({required this.title, required this.accent, required this.child});
+  const _Panel({
+    required this.title,
+    required this.accent,
+    required this.child,
+  });
 
   final String title;
   final Color accent;
@@ -369,7 +398,12 @@ class _Panel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(context.responsive<double>(mobile: AppSpacing.lg, desktop: AppSpacing.xl)),
+      padding: EdgeInsets.all(
+        context.responsive<double>(
+          mobile: AppSpacing.lg,
+          desktop: AppSpacing.xl,
+        ),
+      ),
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -385,7 +419,10 @@ class _Panel extends StatelessWidget {
               Flexible(
                 child: Semantics(
                   header: true,
-                  child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                 ),
               ),
             ],
@@ -427,8 +464,8 @@ class _ContributionRow extends StatelessWidget {
               child: Text(
                 text,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textPrimary.withValues(alpha: 0.9),
-                    ),
+                  color: AppColors.textPrimary.withValues(alpha: 0.9),
+                ),
               ),
             ),
           ],
@@ -447,7 +484,10 @@ class _FeatureTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -459,7 +499,11 @@ class _FeatureTile extends StatelessWidget {
           Icon(Icons.bolt_rounded, size: 16, color: accent),
           const SizedBox(width: 6),
           Flexible(
-            child: Text(text, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontSize: 13.5)),
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.labelLarge
+                  ?.copyWith(fontSize: 13.5),
+            ),
           ),
         ],
       ),
@@ -481,9 +525,15 @@ class _Fact extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label.toUpperCase(), style: theme.labelSmall?.copyWith(color: AppColors.textMuted)),
+          Text(
+            label.toUpperCase(),
+            style: theme.labelSmall?.copyWith(color: AppColors.textMuted),
+          ),
           const SizedBox(height: 4),
-          Text(value, style: theme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+          Text(
+            value,
+            style: theme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+          ),
         ],
       ),
     );
@@ -505,7 +555,10 @@ class _NextProject extends StatelessWidget {
           accent: project.accent,
           radius: AppRadius.xl,
           padding: EdgeInsets.all(
-            context.responsive<double>(mobile: AppSpacing.lg, desktop: AppSpacing.xxl),
+            context.responsive<double>(
+              mobile: AppSpacing.lg,
+              desktop: AppSpacing.xxl,
+            ),
           ),
           semanticLabel: 'Next project: ${project.name}',
           onTap: () => openProject(context, project, replace: true),
@@ -538,7 +591,9 @@ class _NextProject extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: hovered ? project.accent : AppColors.backgroundAlt,
-                  border: Border.all(color: hovered ? project.accent : AppColors.border),
+                  border: Border.all(
+                    color: hovered ? project.accent : AppColors.border,
+                  ),
                 ),
                 child: Icon(
                   Icons.arrow_forward_rounded,
@@ -571,9 +626,17 @@ class _NotFound extends StatelessWidget {
             children: [
               Text('404', style: theme.labelSmall),
               const SizedBox(height: AppSpacing.md),
-              Text('Project not found', style: theme.headlineMedium, textAlign: TextAlign.center),
+              Text(
+                'Project not found',
+                style: theme.headlineMedium,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: AppSpacing.lg),
-              AppButton(label: 'Back to projects', icon: Icons.arrow_back_rounded, onPressed: onBack),
+              AppButton(
+                label: 'Back to projects',
+                icon: Icons.arrow_back_rounded,
+                onPressed: onBack,
+              ),
             ],
           ),
         ),

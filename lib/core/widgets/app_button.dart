@@ -6,6 +6,8 @@ import '../constants/app_dimens.dart';
 
 enum AppButtonVariant { primary, outline, ghost }
 
+/// Pill button: label on the left, an icon in a contrasting circle on the
+/// right. On hover the icon spins a quarter turn and the label nudges over.
 class AppButton extends StatelessWidget {
   const AppButton({
     super.key,
@@ -28,10 +30,9 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = Theme.of(context).textTheme.labelLarge!.copyWith(
-          fontSize: compact ? 14 : 15,
-        );
     final enabled = onPressed != null && !loading;
+    final height = compact ? 44.0 : 52.0;
+    final circle = height - 12;
 
     return HoverBuilder(
       onTap: enabled ? onPressed : null,
@@ -39,33 +40,62 @@ class AppButton extends StatelessWidget {
       builder: (context, hovered) {
         final active = hovered && enabled;
         final isPrimary = variant == AppButtonVariant.primary;
+        final fg = isPrimary ? AppColors.textInverse : AppColors.textPrimary;
+
+        final textStyle = Theme.of(context).textTheme.labelLarge!
+            .copyWith(fontSize: compact ? 14 : 15, color: fg);
 
         final decoration = BoxDecoration(
-          gradient: isPrimary ? AppColors.brandGradient : null,
           color: switch (variant) {
-            AppButtonVariant.primary => null,
-            AppButtonVariant.outline => active
-                ? AppColors.primary.withValues(alpha: 0.12)
-                : AppColors.card.withValues(alpha: 0.4),
+            AppButtonVariant.primary =>
+              active ? AppColors.paper : AppColors.cream,
+            AppButtonVariant.outline =>
+              active ? AppColors.raised : Colors.transparent,
             AppButtonVariant.ghost =>
-              active ? AppColors.card : Colors.transparent,
+              active ? AppColors.raised : Colors.transparent,
           },
           borderRadius: AppRadius.button,
           border: variant == AppButtonVariant.outline
               ? Border.all(
-                  color: active ? AppColors.highlight : AppColors.border,
+                  color: active
+                      ? AppColors.textSecondary
+                      : AppColors.borderStrong,
                 )
               : null,
-          boxShadow: isPrimary
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary
-                        .withValues(alpha: active ? 0.55 : 0.28),
-                    blurRadius: active ? 32 : 20,
-                    offset: const Offset(0, 8),
+        );
+
+        final hasIcon = icon != null || loading;
+        final iconCircle = AnimatedContainer(
+          duration: AppDurations.fast,
+          width: circle,
+          height: circle,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isPrimary ? AppColors.background : AppColors.cream,
+          ),
+          alignment: Alignment.center,
+          child: loading
+              ? SizedBox.square(
+                  dimension: circle * 0.42,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: isPrimary
+                        ? AppColors.textPrimary
+                        : AppColors.textInverse,
                   ),
-                ]
-              : null,
+                )
+              : AnimatedRotation(
+                  duration: AppDurations.medium,
+                  curve: AppCurves.spring,
+                  turns: active ? 0.125 : 0,
+                  child: Icon(
+                    icon,
+                    size: compact ? 16 : 18,
+                    color: isPrimary
+                        ? AppColors.textPrimary
+                        : AppColors.textInverse,
+                  ),
+                ),
         );
 
         return AnimatedOpacity(
@@ -73,29 +103,29 @@ class AppButton extends StatelessWidget {
           opacity: enabled || loading ? 1 : 0.5,
           child: AnimatedScale(
             duration: AppDurations.fast,
-            scale: active ? 1.03 : 1,
+            scale: active ? 1.02 : 1,
             child: AnimatedContainer(
               duration: AppDurations.fast,
               curve: AppCurves.smooth,
-              height: compact ? 42 : 52,
-              padding: EdgeInsets.symmetric(
-                horizontal: compact ? AppSpacing.md + 2 : AppSpacing.lg + 2,
+              height: height,
+              padding: EdgeInsets.only(
+                left: compact ? AppSpacing.md + 2 : AppSpacing.lg,
+                right: hasIcon
+                    ? 6
+                    : (compact ? AppSpacing.md + 2 : AppSpacing.lg),
               ),
               decoration: decoration,
               child: Row(
                 mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: expand
+                    ? MainAxisAlignment.spaceBetween
+                    : MainAxisAlignment.center,
                 children: [
-                  if (loading)
-                    const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.textPrimary,
-                      ),
-                    )
-                  else
-                    Flexible(
+                  Flexible(
+                    child: AnimatedPadding(
+                      duration: AppDurations.medium,
+                      curve: AppCurves.out,
+                      padding: EdgeInsets.only(left: active ? 4 : 0),
                       child: Text(
                         label,
                         style: textStyle,
@@ -103,17 +133,10 @@ class AppButton extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  if (icon != null && !loading) ...[
-                    const SizedBox(width: AppSpacing.xs + 2),
-                    AnimatedSlide(
-                      duration: AppDurations.fast,
-                      offset: active ? const Offset(0.2, 0) : Offset.zero,
-                      child: Icon(
-                        icon,
-                        size: compact ? 16 : 18,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
+                  ),
+                  if (hasIcon) ...[
+                    SizedBox(width: compact ? AppSpacing.sm : AppSpacing.md),
+                    iconCircle,
                   ],
                 ],
               ),

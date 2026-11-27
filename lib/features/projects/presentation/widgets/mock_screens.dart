@@ -10,7 +10,12 @@ import 'phone_frame.dart';
 ///
 /// Each kind has three variants (index 0–2) for multi-phone compositions.
 class MockScreen extends StatelessWidget {
-  const MockScreen({super.key, required this.kind, required this.accent, this.variant = 0});
+  const MockScreen({
+    super.key,
+    required this.kind,
+    required this.accent,
+    this.variant = 0,
+  });
 
   final MockupKind kind;
   final Color accent;
@@ -20,10 +25,22 @@ class MockScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final v = variant % 3;
     final content = switch (kind) {
-      MockupKind.booking => [_BookingList.new, _BookingProfile.new, _Payment.new][v],
-      MockupKind.commerce => [_ShopCatalog.new, _ShopProduct.new, _Payment.new][v],
+      MockupKind.booking => [
+        _BookingList.new,
+        _BookingProfile.new,
+        _Payment.new,
+      ][v],
+      MockupKind.commerce => [
+        _ShopCatalog.new,
+        _ShopProduct.new,
+        _Payment.new,
+      ][v],
       MockupKind.calling => [_VideoCall.new, _ChatList.new, _VoiceCall.new][v],
-      MockupKind.social => [_SocialFeed.new, _ContactsSync.new, _VideoCall.new][v],
+      MockupKind.social => [
+        _SocialFeed.new,
+        _ContactsSync.new,
+        _VideoCall.new,
+      ][v],
     };
     return DefaultTextStyle(
       style: const TextStyle(
@@ -55,7 +72,11 @@ Widget buildProjectPhone(Project project, int index, {double width = 240}) {
           project.screenshots[index % project.screenshots.length],
           semanticLabel: '${project.name} screenshot ${index + 1}',
         )
-      : MockScreen(kind: project.mockupKind, accent: project.accent, variant: index);
+      : MockScreen(
+          kind: project.mockupKind,
+          accent: project.accent,
+          variant: index,
+        );
   return PhoneFrame(screen: screen, width: width, accent: project.accent);
 }
 
@@ -88,7 +109,10 @@ class _StatusBar extends StatelessWidget {
     padding: EdgeInsets.fromLTRB(26, 16, 26, 0),
     child: Row(
       children: [
-        Text('9:41', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+        Text(
+          '9:41',
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
         Spacer(),
         Icon(Icons.signal_cellular_alt_rounded, size: 13),
         SizedBox(width: 4),
@@ -110,11 +134,18 @@ class _Title extends StatelessWidget {
     padding: const EdgeInsets.fromLTRB(20, 22, 20, 14),
     child: Row(
       children: [
-        if (leading != null) ...[_IconBubble(leading!, size: 32), const SizedBox(width: 12)],
+        if (leading != null) ...[
+          _IconBubble(leading!, size: 32),
+          const SizedBox(width: 12),
+        ],
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w700, height: 1.15),
+            style: const TextStyle(
+              fontSize: 21,
+              fontWeight: FontWeight.w700,
+              height: 1.15,
+            ),
           ),
         ),
         if (trailing != null) _IconBubble(trailing!, size: 32),
@@ -232,7 +263,11 @@ class _Pill extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (icon != null) ...[
-          Icon(icon, size: 13, color: selected ? Colors.black87 : Colors.white70),
+          Icon(
+            icon,
+            size: 13,
+            color: selected ? Colors.black87 : Colors.white70,
+          ),
           const SizedBox(width: 5),
         ],
         Text(
@@ -258,7 +293,9 @@ class _CtaButton extends StatelessWidget {
     height: 48,
     alignment: Alignment.center,
     decoration: BoxDecoration(
-      gradient: LinearGradient(colors: [accent, Color.lerp(accent, AppColors.secondary, 0.55)!]),
+      gradient: LinearGradient(
+        colors: [accent, Color.lerp(accent, AppColors.secondary, 0.55)!],
+      ),
       borderRadius: BorderRadius.circular(16),
       boxShadow: [
         BoxShadow(
@@ -270,7 +307,10 @@ class _CtaButton extends StatelessWidget {
     ),
     child: Text(
       label,
-      style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.black87),
+      style: const TextStyle(
+        fontWeight: FontWeight.w700,
+        color: Colors.black87,
+      ),
     ),
   );
 }
@@ -288,7 +328,10 @@ class _Avatar extends StatelessWidget {
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [accent.withValues(alpha: 0.9), AppColors.secondary.withValues(alpha: 0.7)],
+        colors: [
+          accent.withValues(alpha: 0.9),
+          AppColors.secondary.withValues(alpha: 0.7),
+        ],
       ),
     ),
     child: Icon(
@@ -363,7 +406,10 @@ class _BookingList extends StatelessWidget {
             children: [
               Icon(Icons.location_on_rounded, size: 15, color: accent),
               const SizedBox(width: 4),
-              const Text('Near you', style: TextStyle(fontSize: 12, color: Colors.white60)),
+              const Text(
+                'Near you',
+                style: TextStyle(fontSize: 12, color: Colors.white60),
+              ),
               const Spacer(),
               const _IconBubble(Icons.notifications_none_rounded, size: 32),
             ],
@@ -390,7 +436,13 @@ class _BookingList extends StatelessWidget {
                       child: Icon(icon, color: accent, size: 22),
                     ),
                     const SizedBox(height: 6),
-                    Text(label, style: const TextStyle(fontSize: 10.5, color: Colors.white60)),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        color: Colors.white60,
+                      ),
+                    ),
                   ],
                 ),
             ],
@@ -418,12 +470,20 @@ class _BookingList extends StatelessWidget {
                         children: [
                           _Bar(110 - i * 14.0, height: 9, opacity: 0.5),
                           const SizedBox(height: 7),
-                          _Bar(70 + i * 8.0, height: 7, color: accent, opacity: 0.55),
+                          _Bar(
+                            70 + i * 8.0,
+                            height: 7,
+                            color: accent,
+                            opacity: 0.55,
+                          ),
                         ],
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
                       decoration: BoxDecoration(
                         color: accent,
                         borderRadius: BorderRadius.circular(12),
@@ -538,10 +598,17 @@ class _BookingProfile extends StatelessWidget {
                       height: 36,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: i == 2 ? accent : Colors.white.withValues(alpha: 0.05),
+                        color: i == 2
+                            ? accent
+                            : Colors.white.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: _Bar(40, height: 7, opacity: i == 2 ? 0.0 : 0.25, color: Colors.white),
+                      child: _Bar(
+                        40,
+                        height: 7,
+                        opacity: i == 2 ? 0.0 : 0.25,
+                        color: Colors.white,
+                      ),
                     ),
                 ],
               ),
@@ -585,10 +652,16 @@ class _Payment extends StatelessWidget {
                         ],
                       ),
                     ),
-                  Divider(color: Colors.white.withValues(alpha: 0.08), height: 20),
+                  Divider(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    height: 20,
+                  ),
                   Row(
                     children: [
-                      const Text('Total', style: TextStyle(fontWeight: FontWeight.w700)),
+                      const Text(
+                        'Total',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
                       const Spacer(),
                       _Bar(60, height: 10, color: accent, opacity: 0.85),
                     ],
@@ -616,7 +689,10 @@ class _Payment extends StatelessWidget {
                     const SizedBox(width: 12),
                     Text(
                       methods[i].$2,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
                     ),
                     const Spacer(),
                     Container(
@@ -642,7 +718,10 @@ class _Payment extends StatelessWidget {
             children: [
               Icon(Icons.lock_rounded, size: 13, color: accent),
               const SizedBox(width: 6),
-              const Text('Secure payment', style: TextStyle(fontSize: 11.5, color: Colors.white54)),
+              const Text(
+                'Secure payment',
+                style: TextStyle(fontSize: 11.5, color: Colors.white54),
+              ),
             ],
           ),
         ),
@@ -671,7 +750,10 @@ class _ShopCatalog extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _StatusBar(),
-        const _Title('Discover\nyour space', trailing: Icons.shopping_bag_outlined),
+        const _Title(
+          'Discover\nyour space',
+          trailing: Icons.shopping_bag_outlined,
+        ),
         _Search('Search furniture', accent),
         const SizedBox(height: 14),
         _ClipRow(
@@ -792,7 +874,9 @@ class _ShopProduct extends StatelessWidget {
                   ],
                 ),
               ),
-              Expanded(child: Icon(Icons.chair_rounded, size: 170, color: accent)),
+              Expanded(
+                child: Icon(Icons.chair_rounded, size: 170, color: accent),
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -839,7 +923,11 @@ class _ShopProduct extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
               child: Row(
                 children: [
-                  for (final c in [accent, const Color(0xFF8B8B9E), const Color(0xFF5C4033)])
+                  for (final c in [
+                    accent,
+                    const Color(0xFF8B8B9E),
+                    const Color(0xFF5C4033),
+                  ])
                     Container(
                       width: 24,
                       height: 24,
@@ -848,7 +936,9 @@ class _ShopProduct extends StatelessWidget {
                         color: c,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: c == accent ? Colors.white : Colors.transparent,
+                          color: c == accent
+                              ? Colors.white
+                              : Colors.transparent,
                           width: 2,
                         ),
                       ),
@@ -1016,7 +1106,9 @@ class _VoiceCall extends StatelessWidget {
                   height: s,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: accent.withValues(alpha: s == 210 ? 0.15 : 0.3)),
+                    border: Border.all(
+                      color: accent.withValues(alpha: s == 210 ? 0.15 : 0.3),
+                    ),
                   ),
                 ),
               _Avatar(accent, size: 120),
@@ -1027,7 +1119,11 @@ class _VoiceCall extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'Audio call',
-            style: TextStyle(fontSize: 13, color: accent, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontSize: 13,
+              color: accent,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const Spacer(),
           const _CallControls(video: false),
@@ -1059,15 +1155,26 @@ class _ChatList extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
                     child: Row(
                       children: [
-                        _Avatar(i.isEven ? accent : AppColors.highlight, size: 42),
+                        _Avatar(
+                          i.isEven ? accent : AppColors.highlight,
+                          size: 42,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _Bar(100.0 - (i % 3) * 14, height: 9, opacity: 0.55),
+                              _Bar(
+                                100.0 - (i % 3) * 14,
+                                height: 9,
+                                opacity: 0.55,
+                              ),
                               const SizedBox(height: 7),
-                              _Bar(150.0 - (i % 2) * 30, height: 7, opacity: 0.16),
+                              _Bar(
+                                150.0 - (i % 2) * 30,
+                                height: 7,
+                                opacity: 0.16,
+                              ),
                             ],
                           ),
                         ),
@@ -1075,7 +1182,10 @@ class _ChatList extends StatelessWidget {
                           Container(
                             width: 18,
                             height: 18,
-                            decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
+                            decoration: BoxDecoration(
+                              color: accent,
+                              shape: BoxShape.circle,
+                            ),
                           ),
                       ],
                     ),
@@ -1096,7 +1206,11 @@ class _ChatList extends StatelessWidget {
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: Colors.white12),
               boxShadow: const [
-                BoxShadow(color: Colors.black54, blurRadius: 20, offset: Offset(0, 8)),
+                BoxShadow(
+                  color: Colors.black54,
+                  blurRadius: 20,
+                  offset: Offset(0, 8),
+                ),
               ],
             ),
             child: Row(
@@ -1114,7 +1228,10 @@ class _ChatList extends StatelessWidget {
                     children: [
                       Text(
                         'Incoming video call',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       SizedBox(height: 5),
                       _Bar(90, height: 6, opacity: 0.3),
@@ -1171,9 +1288,14 @@ class _SocialFeed extends StatelessWidget {
                         padding: const EdgeInsets.all(2.5),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: LinearGradient(colors: [accent, AppColors.secondary]),
+                          gradient: LinearGradient(
+                            colors: [accent, AppColors.secondary],
+                          ),
                         ),
-                        child: _Avatar(i.isEven ? accent : AppColors.highlight, size: 44),
+                        child: _Avatar(
+                          i.isEven ? accent : AppColors.highlight,
+                          size: 44,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       const _Bar(34, height: 6, opacity: 0.3),
@@ -1228,9 +1350,17 @@ class _SocialFeed extends StatelessWidget {
                         color: Colors.white60,
                       ),
                       const SizedBox(width: 14),
-                      const Icon(Icons.share_rounded, size: 18, color: Colors.white60),
+                      const Icon(
+                        Icons.share_rounded,
+                        size: 18,
+                        color: Colors.white60,
+                      ),
                       const Spacer(),
-                      const Icon(Icons.videocam_outlined, size: 20, color: Colors.white60),
+                      const Icon(
+                        Icons.videocam_outlined,
+                        size: 20,
+                        color: Colors.white60,
+                      ),
                     ],
                   ),
                 ],
@@ -1275,7 +1405,10 @@ class _ContactsSync extends StatelessWidget {
                   children: [
                     Text(
                       'Contacts synced',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
                     ),
                     SizedBox(height: 5),
                     _Bar(110, height: 6, opacity: 0.25),
@@ -1299,7 +1432,11 @@ class _ContactsSync extends StatelessWidget {
                     Expanded(
                       child: Align(
                         alignment: Alignment.centerLeft,
-                        child: _Bar(110.0 - (i % 3) * 16, height: 9, opacity: 0.5),
+                        child: _Bar(
+                          110.0 - (i % 3) * 16,
+                          height: 9,
+                          opacity: 0.5,
+                        ),
                       ),
                     ),
                     Icon(Icons.call_outlined, size: 19, color: accent),

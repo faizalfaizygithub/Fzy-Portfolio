@@ -35,7 +35,9 @@ class _PortfolioAppState extends State<PortfolioApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider(create: (_) => ProjectsProvider(const LocalProjectRepository())),
+        Provider(
+          create: (_) => ProjectsProvider(const LocalProjectRepository()),
+        ),
         ChangeNotifierProvider(
           create: (_) => ContactProvider(
             widget.contactRepository ?? Web3FormsContactRepository(),

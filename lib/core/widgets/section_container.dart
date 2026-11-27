@@ -18,7 +18,8 @@ class SectionContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double vertical = verticalPadding ??
+    final double vertical =
+        verticalPadding ??
         context.responsive<double>(
           mobile: AppSpacing.sectionMobile,
           desktop: AppSpacing.section,

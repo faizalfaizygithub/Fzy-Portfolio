@@ -1,23 +1,23 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:visibility_detector/visibility_detector.dart';
 
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_dimens.dart';
 import '../../../../../core/constants/app_info.dart';
 import '../../../../../core/constants/app_sections.dart';
 import '../../../../../core/responsive/responsive.dart';
+import '../../../../../core/theme/app_typography.dart';
 import '../../../../../core/utils/link_launcher.dart';
-import '../../../../../core/widgets/app_button.dart';
-import '../../../../../core/widgets/social_links.dart';
-import '../../../../../shared/animations/staggered_words.dart';
+import '../../../../../core/widgets/editorial.dart';
+import '../../../../../shared/animations/hover_builder.dart';
+import '../../../../../shared/animations/scroll_select.dart';
+import '../../../../../shared/widgets/blend_mask.dart';
+import '../../providers/intro_controller.dart';
 import '../../providers/navigation_provider.dart';
-import 'code_snippet_card.dart';
-import 'hero_background.dart';
-import 'tech_orbit.dart';
 
+/// White, full-height hero: portrait anchored to the bottom, a giant first
+/// name that rises letter by letter and inverts over the portrait
+/// (difference blend), role and links in the corners.
 class HeroSection extends StatefulWidget {
   const HeroSection({super.key});
 
@@ -25,145 +25,588 @@ class HeroSection extends StatefulWidget {
   State<HeroSection> createState() => _HeroSectionState();
 }
 
-class _HeroSectionState extends State<HeroSection> with TickerProviderStateMixin {
-  /// One-shot entrance timeline for all hero content.
-  late final AnimationController _intro = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 2400),
-  );
-
-  /// Shared infinite loop for orbit, floating, gradient drift and particles.
-  late final AnimationController _ambient = AnimationController(
-    vsync: this,
-    duration: AppDurations.ambientLoop * 2,
-  );
-
-  bool _reduceMotion = false;
-  bool _visible = true;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _reduceMotion = context.reduceMotion;
-    if (_reduceMotion) {
-      _intro.value = 1;
-      _ambient.stop();
-    } else {
-      if (_intro.isDismissed) _intro.forward();
-      _syncAmbient();
-    }
-  }
-
-  /// Run the ambient loop only while the hero is on screen.
-  void _syncAmbient() {
-    final shouldRun = _visible && !_reduceMotion;
-    if (shouldRun && !_ambient.isAnimating) {
-      _ambient.repeat();
-    } else if (!shouldRun && _ambient.isAnimating) {
-      _ambient.stop();
-    }
-  }
+class _HeroSectionState extends State<HeroSection> {
+  /// Pointer position normalised to -1..1, for subtle parallax.
+  final _pointer = ValueNotifier<Offset>(Offset.zero);
 
   @override
   void dispose() {
-    _intro.dispose();
-    _ambient.dispose();
+    _pointer.dispose();
     super.dispose();
   }
-
-  /// `drive` + CurveTween only attaches to the controller while something
-  /// listens, so these never leak listeners.
-  Animation<double> _interval(double begin, double end) => _intro.drive(
-        CurveTween(curve: Interval(begin, end, curve: AppCurves.emphasized)),
-      );
-
-  late final _labelAnim = _interval(0.0, 0.3);
-  late final _headingAnim = _interval(0.05, 0.6);
-  late final _bodyAnim = _interval(0.35, 0.65);
-  late final _chipsAnim = _interval(0.45, 0.75);
-  late final _buttonsAnim = _interval(0.55, 0.85);
-  late final _socialsAnim = _interval(0.65, 0.95);
-  late final _visualAnim = _interval(0.15, 0.7);
-  late final _scrollHintAnim = _interval(0.8, 1);
-  late final _typingAnim =
-      _intro.drive(CurveTween(curve: const Interval(0.35, 1)));
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final desktop = context.isDesktop;
-    final minHeight = math.max(size.height, desktop ? 720.0 : 0.0);
+    final mobile = !context.isDesktop && size.width < Breakpoints.desktop;
+    final height = (size.height).clamp(mobile ? 560.0 : 620.0, 1400.0);
+    final play = context.select<IntroController, bool>((c) => c.done);
+    final motion = !context.reduceMotion;
 
-    final content = _HeroContent(
-      label: _labelAnim,
-      heading: _headingAnim,
-      body: _bodyAnim,
-      chips: _chipsAnim,
-      buttons: _buttonsAnim,
-      socials: _socialsAnim,
+    final layout = mobile
+        ? _MobileLayout(width: size.width, height: height)
+        : _DesktopLayout(width: size.width, height: height);
+
+    return MouseRegion(
+      onHover: motion
+          ? (e) => _pointer.value = Offset(
+              (e.position.dx / size.width) * 2 - 1,
+              (e.position.dy / height) * 2 - 1,
+            )
+          : null,
+      onExit: (_) => _pointer.value = Offset.zero,
+      child: SizedBox(
+        height: height,
+        child: ScrollSelect<double>(
+          initial: 0,
+          // How far the hero has scrolled away (0..1).
+          select: (m) => quantize((-m.top / m.height).clamp(0.0, 1.0), 300),
+          builder: (context, scrolled, _) => ClipRect(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                const ColoredBox(color: AppColors.paper),
+                // Portrait.
+                Positioned(
+                  left: layout.portraitRect.left,
+                  top: layout.portraitRect.top,
+                  width: layout.portraitRect.width,
+                  height: layout.portraitRect.height,
+                  child: _Portrait(
+                    play: play,
+                    pointer: _pointer,
+                    scrolled: motion ? scrolled : 0,
+                  ),
+                ),
+                // Giant name (difference blend).
+                Positioned(
+                  left: layout.nameRect.left,
+                  top: layout.nameRect.top,
+                  width: layout.nameRect.width,
+                  child: _HeroName(
+                    play: play,
+                    pointer: _pointer,
+                    scrolled: motion ? scrolled : 0,
+                  ),
+                ),
+                ...layout.corners(context, play),
+                // Darken as the hero scrolls away, so the dark page below
+                // feels like it rises over it.
+                if (motion)
+                  IgnorePointer(
+                    child: ColoredBox(
+                      color: AppColors.background.withValues(
+                        alpha: (scrolled * 0.9).clamp(0.0, 0.9),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
+  }
+}
 
-    final visual = _HeroVisual(
-      ambient: _ambient,
-      reveal: _visualAnim,
-      typing: _typingAnim,
-      size: context.responsive<double>(mobile: math.min(size.width - 40, 360), tablet: 440, desktop: 520),
-      showCode: !context.isMobile,
+/// Positions for the desktop composition.
+abstract class _Layout {
+  Rect get portraitRect;
+  Rect get nameRect;
+  List<Widget> corners(BuildContext context, bool play);
+}
+
+class _DesktopLayout implements _Layout {
+  _DesktopLayout({required this.width, required this.height});
+
+  final double width;
+  final double height;
+
+  static const _aspect = 1052 / 1494;
+
+  @override
+  Rect get portraitRect {
+    final h = (height - 64).clamp(420.0, 1300.0);
+    final w = (h * _aspect).clamp(0.0, width * 0.5);
+    final realH = w / _aspect;
+    return Rect.fromLTWH(width * 0.5 + width * 0.029, height - realH, w, realH);
+  }
+
+  @override
+  Rect get nameRect => Rect.fromLTWH(
+    width * 0.039,
+    (height * 0.27).clamp(216.0, 400.0),
+    width * 0.8,
+    0,
+  );
+
+  @override
+  List<Widget> corners(BuildContext context, bool play) {
+    final g = gutter(context);
+    return [
+      Positioned(
+        left: g,
+        bottom: 48,
+        child: _Delayed(
+          play: play,
+          delay: 650,
+          child: const BlendMask(
+            blendMode: BlendMode.difference,
+            child: _HeroLinks(vertical: true),
+          ),
+        ),
+      ),
+      Positioned(
+        left: g,
+        top: 108,
+        width: 300,
+        child: _Delayed(play: play, delay: 550, child: const _HeroBlurb()),
+      ),
+      Positioned(
+        right: g,
+        bottom: 40,
+        child: _Delayed(
+          play: play,
+          delay: 500,
+          child: BlendMask(
+            blendMode: BlendMode.difference,
+            child: _HeroRole(size: fluid(context, 30, 46)),
+          ),
+        ),
+      ),
+      Positioned(
+        left: 0,
+        right: 0,
+        bottom: 28,
+        child: _Delayed(play: play, delay: 900, child: const _ScrollCue()),
+      ),
+    ];
+  }
+}
+
+class _MobileLayout implements _Layout {
+  _MobileLayout({required this.width, required this.height});
+
+  final double width;
+  final double height;
+
+  static const _aspect = 1052 / 1494;
+
+  @override
+  Rect get portraitRect {
+    final w = (width * 1.08).clamp(0.0, (height - 230) * _aspect);
+    final h = w / _aspect;
+    return Rect.fromLTWH((width - w) / 2 + width * 0.04, height - h, w, h);
+  }
+
+  @override
+  Rect get nameRect {
+    final p = portraitRect;
+    final nameH = (width - 24) * 0.36;
+    final top = (p.top + p.height * 0.6 - nameH * 0.5).clamp(
+      200.0,
+      height - nameH - 40,
     );
+    return Rect.fromLTWH(12, top, width - 24, nameH);
+  }
 
-    return VisibilityDetector(
-      key: const Key('hero-visibility'),
-      onVisibilityChanged: (info) {
-        if (!mounted) return;
-        _visible = info.visibleFraction > 0;
-        _syncAmbient();
-      },
-      child: ConstrainedBox(
-        constraints: BoxConstraints(minHeight: minHeight),
-        child: Stack(
-          // Passes the min height through so the content can center itself.
-          fit: StackFit.passthrough,
-          children: [
-            Positioned.fill(child: HeroBackground(ambient: _ambient)),
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                context.horizontalPadding,
-                AppSizes.navHeight + context.responsive<double>(mobile: 32, desktop: 48),
-                context.horizontalPadding,
-                context.responsive<double>(mobile: 48, desktop: 96),
+  @override
+  List<Widget> corners(BuildContext context, bool play) {
+    final g = gutter(context);
+    return [
+      Positioned(
+        left: g,
+        right: g,
+        top: 92,
+        child: _Delayed(
+          play: play,
+          delay: 500,
+          child: BlendMask(
+            blendMode: BlendMode.difference,
+            child: _HeroRole(size: fluid(context, 28, 40), alignEnd: false),
+          ),
+        ),
+      ),
+      Positioned(
+        left: g,
+        top: 168,
+        child: _Delayed(
+          play: play,
+          delay: 650,
+          child: const BlendMask(
+            blendMode: BlendMode.difference,
+            child: _HeroLinks(vertical: false),
+          ),
+        ),
+      ),
+    ];
+  }
+}
+
+class _Portrait extends StatelessWidget {
+  const _Portrait({
+    required this.play,
+    required this.pointer,
+    required this.scrolled,
+  });
+
+  final bool play;
+  final ValueNotifier<Offset> pointer;
+  final double scrolled;
+
+  @override
+  Widget build(BuildContext context) {
+    // The photo's backdrop is ~#F4F4F4 with faint texture; a slight gain
+    // pushes it to pure white so the portrait melts into the hero.
+    final image = ColorFiltered(
+      colorFilter: const ColorFilter.matrix([
+        1.07, 0, 0, 0, 0, //
+        0, 1.07, 0, 0, 0, //
+        0, 0, 1.07, 0, 0, //
+        0, 0, 0, 1, 0,
+      ]),
+      child: Image.asset(
+        AppInfo.portrait,
+        fit: BoxFit.cover,
+        alignment: Alignment.topCenter,
+        filterQuality: FilterQuality.medium,
+        semanticLabel: 'Portrait of ${AppInfo.name}',
+      ),
+    );
+    if (context.reduceMotion) return image;
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: play ? 1 : 0),
+      duration: const Duration(milliseconds: 1600),
+      curve: AppCurves.expoOut,
+      builder: (context, t, child) => ValueListenableBuilder<Offset>(
+        valueListenable: pointer,
+        child: child,
+        builder: (context, p, child) => TweenAnimationBuilder<Offset>(
+          tween: Tween(end: p),
+          duration: const Duration(milliseconds: 900),
+          curve: AppCurves.out,
+          child: child,
+          builder: (context, sp, child) => Transform(
+            alignment: Alignment.bottomCenter,
+            transform: Matrix4.identity()
+              ..translateByDouble(
+                sp.dx * -10,
+                // Rise in on load, sink slightly while scrolling away.
+                (1 - t) * 120 + scrolled * 140,
+                0,
+                1,
+              )
+              ..scaleByDouble(
+                1.12 - 0.12 * t + scrolled * 0.06,
+                1.12 - 0.12 * t + scrolled * 0.06,
+                1,
+                1,
               ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: AppSizes.maxContentWidth),
-                  child: desktop
-                      ? Row(
-                          children: [
-                            Expanded(flex: 11, child: content),
-                            const SizedBox(width: AppSpacing.xl),
-                            Expanded(flex: 9, child: Center(child: visual)),
-                          ],
-                        )
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            content,
-                            const SizedBox(height: AppSpacing.xxl),
-                            Center(child: visual),
-                          ],
-                        ),
+            child: child,
+          ),
+        ),
+      ),
+      child: image,
+    );
+  }
+}
+
+class _HeroName extends StatelessWidget {
+  const _HeroName({
+    required this.play,
+    required this.pointer,
+    required this.scrolled,
+  });
+
+  final bool play;
+  final ValueNotifier<Offset> pointer;
+  final double scrolled;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = AppTypography.heading(
+      const TextStyle(
+        fontSize: 400,
+        height: 1.0,
+        fontWeight: FontWeight.w600,
+        letterSpacing: -24,
+        color: AppColors.paper,
+      ),
+    );
+    final letters = AppInfo.firstName.split('');
+    final motion = !context.reduceMotion;
+
+    Widget word = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < letters.length; i++)
+          _RisingLetter(
+            letter: letters[i],
+            style: style,
+            play: play || !motion,
+            delay: Duration(milliseconds: 60 * i),
+          ),
+      ],
+    );
+
+    word = FittedBox(
+      fit: BoxFit.fitWidth,
+      alignment: Alignment.centerLeft,
+      child: Padding(padding: const EdgeInsets.only(right: 28), child: word),
+    );
+
+    if (motion) {
+      word = ValueListenableBuilder<Offset>(
+        valueListenable: pointer,
+        child: word,
+        builder: (context, p, child) => TweenAnimationBuilder<Offset>(
+          tween: Tween(end: p),
+          duration: const Duration(milliseconds: 1100),
+          curve: AppCurves.out,
+          child: child,
+          builder: (context, sp, child) => Transform.translate(
+            offset: Offset(sp.dx * 14 - scrolled * 220, -scrolled * 90),
+            child: child,
+          ),
+        ),
+      );
+    }
+
+    return Semantics(
+      header: true,
+      label: '${AppInfo.name}, ${AppInfo.role}',
+      child: ExcludeSemantics(
+        child: BlendMask(blendMode: BlendMode.difference, child: word),
+      ),
+    );
+  }
+}
+
+class _RisingLetter extends StatelessWidget {
+  const _RisingLetter({
+    required this.letter,
+    required this.style,
+    required this.play,
+    required this.delay,
+  });
+
+  final String letter;
+  final TextStyle style;
+  final bool play;
+  final Duration delay;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Text(letter, style: style);
+    if (context.reduceMotion) return text;
+    return ClipRect(
+      child: _DelayedTween(
+        play: play,
+        delay: delay,
+        duration: const Duration(milliseconds: 1200),
+        curve: AppCurves.power4Out,
+        builder: (t, child) => FractionalTranslation(
+          translation: Offset(0, 1.05 * (1 - t)),
+          child: Transform.rotate(
+            angle: (1 - t) * 0.12,
+            alignment: Alignment.bottomLeft,
+            child: child,
+          ),
+        ),
+        child: text,
+      ),
+    );
+  }
+}
+
+/// Tween 0→1 that starts [delay] after [play] turns true.
+class _DelayedTween extends StatefulWidget {
+  const _DelayedTween({
+    required this.play,
+    required this.delay,
+    required this.duration,
+    required this.curve,
+    required this.builder,
+    required this.child,
+  });
+
+  final bool play;
+  final Duration delay;
+  final Duration duration;
+  final Curve curve;
+  final Widget Function(double t, Widget child) builder;
+  final Widget child;
+
+  @override
+  State<_DelayedTween> createState() => _DelayedTweenState();
+}
+
+class _DelayedTweenState extends State<_DelayedTween>
+    with SingleTickerProviderStateMixin {
+  late final _controller = AnimationController(
+    vsync: this,
+    duration: widget.duration,
+  );
+  late final _curved = CurvedAnimation(
+    parent: _controller,
+    curve: widget.curve,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.play) _schedule();
+  }
+
+  @override
+  void didUpdateWidget(covariant _DelayedTween oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.play && !oldWidget.play) _schedule();
+  }
+
+  void _schedule() {
+    Future<void>.delayed(widget.delay, () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _curved.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _curved,
+    child: widget.child,
+    builder: (context, child) => widget.builder(_curved.value, child!),
+  );
+}
+
+/// Slides up into place [delay]ms after the intro finishes. Avoids opacity
+/// layers so difference blending keeps working.
+class _Delayed extends StatelessWidget {
+  const _Delayed({
+    required this.play,
+    required this.delay,
+    required this.child,
+  });
+
+  final bool play;
+  final int delay;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (context.reduceMotion) return child;
+    return ClipRect(
+      child: _DelayedTween(
+        play: play,
+        delay: Duration(milliseconds: delay),
+        duration: const Duration(milliseconds: 1000),
+        curve: AppCurves.power4Out,
+        builder: (t, child) => FractionalTranslation(
+          translation: Offset(0, 1.1 * (1 - t)),
+          child: child,
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _HeroRole extends StatelessWidget {
+  const _HeroRole({required this.size, this.alignEnd = true});
+
+  final double size;
+  final bool alignEnd;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = AppTypography.heading(
+      TextStyle(
+        fontSize: size,
+        height: 1.02,
+        fontWeight: FontWeight.w600,
+        letterSpacing: -size * 0.03,
+        color: AppColors.paper,
+      ),
+    );
+    return Text(
+      '${AppInfo.role}\n${AppInfo.roleDetail}',
+      style: style,
+      textAlign: alignEnd ? TextAlign.end : TextAlign.start,
+    );
+  }
+}
+
+class _HeroLinks extends StatelessWidget {
+  const _HeroLinks({required this.vertical});
+
+  final bool vertical;
+
+  @override
+  Widget build(BuildContext context) {
+    final links = <(String, VoidCallback)>[
+      ('LinkedIn', LinkLauncher.linkedIn),
+      if (AppInfo.hasGitHub) ('GitHub', LinkLauncher.gitHub),
+      ('Email', LinkLauncher.email),
+      ('Resume', LinkLauncher.downloadResume),
+    ];
+    final children = [
+      for (final (label, onTap) in links)
+        _ArrowLink(label: label, onTap: onTap),
+    ];
+    return vertical
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: children,
+          )
+        : Wrap(spacing: 18, children: children);
+  }
+}
+
+class _ArrowLink extends StatelessWidget {
+  const _ArrowLink({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return HoverBuilder(
+      onTap: onTap,
+      semanticLabel: label,
+      builder: (context, hovered) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: AppTypography.label(
+                TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.paper,
+                  decoration: hovered ? TextDecoration.underline : null,
+                  decorationColor: AppColors.paper,
                 ),
               ),
             ),
-            if (desktop)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: AppSpacing.xl,
-                child: FadeTransition(
-                  opacity: _scrollHintAnim,
-                  child: Center(child: _ScrollIndicator(ambient: _ambient)),
-                ),
+            const SizedBox(width: 4),
+            AnimatedRotation(
+              duration: AppDurations.fast,
+              turns: hovered ? 0.125 : 0,
+              child: const Icon(
+                Icons.north_east_rounded,
+                size: 14,
+                color: AppColors.paper,
               ),
+            ),
           ],
         ),
       ),
@@ -171,153 +614,39 @@ class _HeroSectionState extends State<HeroSection> with TickerProviderStateMixin
   }
 }
 
-class _FadeSlide extends StatelessWidget {
-  const _FadeSlide({required this.animation, required this.child, this.dy = 0.3});
-
-  final Animation<double> animation;
-  final Widget child;
-  final double dy;
+class _HeroBlurb extends StatelessWidget {
+  const _HeroBlurb();
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: animation,
-      child: SlideTransition(
-        position: Tween(begin: Offset(0, dy), end: Offset.zero).animate(animation),
-        child: child,
-      ),
-    );
-  }
-}
-
-class _HeroContent extends StatelessWidget {
-  const _HeroContent({
-    required this.label,
-    required this.heading,
-    required this.body,
-    required this.chips,
-    required this.buttons,
-    required this.socials,
-  });
-
-  final Animation<double> label;
-  final Animation<double> heading;
-  final Animation<double> body;
-  final Animation<double> chips;
-  final Animation<double> buttons;
-  final Animation<double> socials;
-
-  static const _specializations = [
-    (Icons.flutter_dash_rounded, 'Flutter & Dart'),
-    (Icons.cloud_sync_rounded, 'Firebase & Backend Integration'),
-    (Icons.videocam_rounded, 'Real-Time Communication'),
-    (Icons.layers_rounded, 'Clean Architecture'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context).textTheme;
-    final nav = context.read<NavigationProvider>();
-    final headingStyle = context.responsive(
-      mobile: theme.displaySmall!.copyWith(fontSize: 40),
-      tablet: theme.displayMedium,
-      desktop: theme.displayLarge!.copyWith(
-        fontSize: context.screenWidth < 1280 ? 62 : 72,
-      ),
-    );
-
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _FadeSlide(animation: label, child: const _AvailabilityBadge()),
-        const SizedBox(height: AppSpacing.lg),
-        StaggeredWords(
-          text: 'Building Beautiful Digital Experiences with Flutter.',
-          highlight: const {'Beautiful', 'Flutter.'},
-          animation: heading,
-          style: headingStyle,
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        _FadeSlide(
-          animation: body,
-          dy: 0.15,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  const TextSpan(text: "I'm "),
-                  TextSpan(
-                    text: AppInfo.shortName,
-                    style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
-                  ),
-                  const TextSpan(
-                    text: ', a Flutter Developer passionate about creating scalable, high-performance, '
-                        'and beautifully designed mobile applications.',
-                  ),
-                ],
-              ),
-              style: theme.bodyLarge,
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        _FadeSlide(
-          animation: chips,
-          dy: 0.4,
-          child: Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
-            children: [
-              for (final (icon, text) in _specializations) _SpecChip(icon: icon, label: text),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xl),
-        _FadeSlide(
-          animation: buttons,
-          dy: 0.6,
-          child: Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              AppButton(
-                label: 'Explore My Work',
-                icon: Icons.arrow_forward_rounded,
-                onPressed: () => nav.scrollTo(AppSection.projects),
-              ),
-              const AppButton(
-                label: 'Download Resume',
-                icon: Icons.download_rounded,
-                variant: AppButtonVariant.outline,
-                onPressed: LinkLauncher.downloadResume,
-              ),
-              AppButton(
-                label: 'Contact Me',
-                variant: AppButtonVariant.ghost,
-                icon: Icons.north_east_rounded,
-                onPressed: () => nav.scrollTo(AppSection.contact),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xl),
-        _FadeSlide(
-          animation: socials,
-          dy: 0.6,
-          child: Row(
-            children: [
-              const SocialLinks(size: 42),
-              const SizedBox(width: AppSpacing.md),
-              Flexible(
-                child: Text(
-                  '${AppInfo.experience}+ yrs · ${AppInfo.location.split(',').first}, India',
-                  style: theme.labelMedium,
-                  overflow: TextOverflow.ellipsis,
+        Row(
+          children: [
+            const _PulseDot(),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                'AVAILABLE FOR NEW PROJECTS',
+                style: AppTypography.eyebrow(
+                  color: AppColors.textInverse,
+                  size: 11.5,
                 ),
               ),
-            ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'I design and ship cross-platform apps in Flutter — '
+          'fast, polished and ready for the store.',
+          style: AppTypography.body(
+            const TextStyle(
+              fontSize: 15,
+              height: 1.55,
+              color: Color(0xFF4A4A4A),
+            ),
           ),
         ),
       ],
@@ -325,42 +654,6 @@ class _HeroContent extends StatelessWidget {
   }
 }
 
-class _AvailabilityBadge extends StatelessWidget {
-  const _AvailabilityBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
-      decoration: BoxDecoration(
-        color: AppColors.success.withValues(alpha: 0.08),
-        borderRadius: AppRadius.button,
-        border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const _PulseDot(),
-          const SizedBox(width: AppSpacing.xs + 2),
-          Flexible(
-            child: Text(
-              'AVAILABLE FOR OPPORTUNITIES',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.success,
-                    fontSize: 11.5,
-                  ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Dot with an expanding halo. The halo is an implicit animation restarted
-/// from `onEnd`, so no AnimationController is needed.
 class _PulseDot extends StatefulWidget {
   const _PulseDot();
 
@@ -368,178 +661,148 @@ class _PulseDot extends StatefulWidget {
   State<_PulseDot> createState() => _PulseDotState();
 }
 
-class _PulseDotState extends State<_PulseDot> {
-  bool _expanded = false;
+class _PulseDotState extends State<_PulseDot>
+    with SingleTickerProviderStateMixin {
+  late final _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1800),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (context.reduceMotion) {
+      _c.stop();
+    } else if (!_c.isAnimating) {
+      _c.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    const dot = DecoratedBox(
-      decoration: BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
-      child: SizedBox.square(dimension: 8),
-    );
-    if (context.reduceMotion) return dot;
-
     return SizedBox.square(
-      dimension: 8,
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.center,
-        children: [
-          TweenAnimationBuilder<double>(
-            key: ValueKey(_expanded),
-            tween: Tween(begin: 0, end: 1),
-            duration: const Duration(milliseconds: 1600),
-            onEnd: () {
-              if (mounted) setState(() => _expanded = !_expanded);
-            },
-            builder: (context, t, _) => Transform.scale(
-              scale: 1 + t * 1.6,
-              child: Opacity(
-                opacity: (1 - t) * 0.6,
-                child: const DecoratedBox(
-                  decoration: BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
-                  child: SizedBox.square(dimension: 8),
-                ),
+      dimension: 12,
+      child: AnimatedBuilder(
+        animation: _c,
+        builder: (context, _) => CustomPaint(painter: _PulsePainter(_c.value)),
+      ),
+    );
+  }
+}
+
+class _PulsePainter extends CustomPainter {
+  _PulsePainter(this.t);
+
+  final double t;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    canvas.drawCircle(
+      c,
+      3 + 6 * t,
+      Paint()..color = AppColors.success.withValues(alpha: 0.4 * (1 - t)),
+    );
+    canvas.drawCircle(c, 3.5, Paint()..color = const Color(0xFF16A34A));
+  }
+
+  @override
+  bool shouldRepaint(_PulsePainter old) => old.t != t;
+}
+
+class _ScrollCue extends StatelessWidget {
+  const _ScrollCue();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: HoverBuilder(
+        onTap: () =>
+            context.read<NavigationProvider>().scrollTo(AppSection.about),
+        semanticLabel: 'Scroll to about',
+        builder: (context, hovered) => Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'SCROLL',
+              style: AppTypography.eyebrow(
+                color: AppColors.textInverse,
+                size: 11,
               ),
             ),
-          ),
-          dot,
-        ],
-      ),
-    );
-  }
-}
-
-class _SpecChip extends StatelessWidget {
-  const _SpecChip({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
-      decoration: BoxDecoration(
-        color: AppColors.card.withValues(alpha: 0.7),
-        borderRadius: AppRadius.button,
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 15, color: AppColors.highlight),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: AppColors.textPrimary.withValues(alpha: 0.85),
-                  ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HeroVisual extends StatelessWidget {
-  const _HeroVisual({
-    required this.ambient,
-    required this.reveal,
-    required this.typing,
-    required this.size,
-    required this.showCode,
-  });
-
-  final Animation<double> ambient;
-  final Animation<double> reveal;
-  final Animation<double> typing;
-  final double size;
-  final bool showCode;
-
-  @override
-  Widget build(BuildContext context) {
-    final orbit = TechOrbit(ambient: ambient, size: size);
-
-    return FadeTransition(
-      opacity: reveal,
-      child: ScaleTransition(
-        scale: Tween(begin: 0.88, end: 1.0).animate(reveal),
-        child: SizedBox(
-          width: size,
-          height: showCode ? size + size * 0.12 : size,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Positioned(top: 0, left: 0, child: orbit),
-              if (showCode)
-                Positioned(
-                  left: -size * 0.14,
-                  bottom: 0,
-                  child: AnimatedBuilder(
-                    animation: ambient,
-                    builder: (context, child) => Transform.translate(
-                      offset: Offset(0, math.sin(ambient.value * 2 * math.pi * 4) * 8),
-                      child: child,
-                    ),
-                    child: CodeSnippetCard(progress: typing, width: size * 0.66),
-                  ),
-                ),
-            ],
-          ),
+            const SizedBox(height: 8),
+            const _ScrollLine(),
+          ],
         ),
       ),
     );
   }
 }
 
-class _ScrollIndicator extends StatelessWidget {
-  const _ScrollIndicator({required this.ambient});
+class _ScrollLine extends StatefulWidget {
+  const _ScrollLine();
 
-  final Animation<double> ambient;
+  @override
+  State<_ScrollLine> createState() => _ScrollLineState();
+}
+
+class _ScrollLineState extends State<_ScrollLine>
+    with SingleTickerProviderStateMixin {
+  late final _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1600),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!context.reduceMotion && !_c.isAnimating) _c.repeat();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 24,
-          height: 38,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.textSecondary.withValues(alpha: 0.5), width: 1.5),
-          ),
-          child: AnimatedBuilder(
-            animation: ambient,
-            builder: (context, _) {
-              // ~1.6s cycle derived from the long ambient loop.
-              final cycles = (AppDurations.ambientLoop * 2).inMilliseconds / 1600;
-              final t = (ambient.value * cycles) % 1.0;
-              return Align(
-                alignment: Alignment(0, -0.6 + t * 1.0),
-                child: Opacity(
-                  opacity: 1 - t,
-                  child: Container(
-                    width: 4,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      color: AppColors.highlight,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Text('SCROLL', style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 10, color: AppColors.textMuted)),
-      ],
+    return SizedBox(
+      width: 1,
+      height: 36,
+      child: AnimatedBuilder(
+        animation: _c,
+        builder: (context, _) => CustomPaint(painter: _LinePainter(_c.value)),
+      ),
     );
   }
+}
+
+class _LinePainter extends CustomPainter {
+  _LinePainter(this.t);
+
+  final double t;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final track = Paint()
+      ..color = AppColors.textInverse.withValues(alpha: 0.15);
+    canvas.drawRect(Offset.zero & size, track);
+    final eased = AppCurves.inOut.transform(t);
+    final start = (eased * 1.4 - 0.4).clamp(0.0, 1.0) * size.height;
+    final end = (eased * 1.4).clamp(0.0, 1.0) * size.height;
+    canvas.drawRect(
+      Rect.fromLTRB(0, start, size.width, end),
+      Paint()..color = AppColors.textInverse,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_LinePainter old) => old.t != t;
 }

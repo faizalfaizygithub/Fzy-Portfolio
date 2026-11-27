@@ -41,7 +41,8 @@ abstract final class ContactValidators {
     final value = v?.trim() ?? '';
     if (value.isEmpty) return 'Please enter your name.';
     if (value.length < 2) return 'Name looks too short.';
-    if (value.length > 100) return 'Please keep your name under 100 characters.';
+    if (value.length > 100)
+      return 'Please keep your name under 100 characters.';
     return null;
   }
 
@@ -55,15 +56,18 @@ abstract final class ContactValidators {
   static String? subject(String? v) {
     final value = v?.trim() ?? '';
     if (value.isEmpty) return 'Please add a subject.';
-    if (value.length > 150) return 'Please keep the subject under 150 characters.';
+    if (value.length > 150)
+      return 'Please keep the subject under 150 characters.';
     return null;
   }
 
   static String? message(String? v) {
     final value = v?.trim() ?? '';
     if (value.isEmpty) return 'Please write a message.';
-    if (value.length < 10) return 'Please add a little more detail (10+ characters).';
-    if (value.length > 5000) return 'Please keep your message under 5000 characters.';
+    if (value.length < 10)
+      return 'Please add a little more detail (10+ characters).';
+    if (value.length > 5000)
+      return 'Please keep your message under 5000 characters.';
     return null;
   }
 }

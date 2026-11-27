@@ -119,7 +119,11 @@ class FramedScreenshot extends StatelessWidget {
             blurRadius: width * 0.35,
             offset: Offset(0, width * 0.12),
           ),
-          const BoxShadow(color: Color(0x99000000), blurRadius: 30, offset: Offset(0, 18)),
+          const BoxShadow(
+            color: Color(0x99000000),
+            blurRadius: 30,
+            offset: Offset(0, 18),
+          ),
         ],
       ),
       child: ClipRRect(

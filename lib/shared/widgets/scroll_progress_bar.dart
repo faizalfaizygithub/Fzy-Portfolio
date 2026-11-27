@@ -23,8 +23,9 @@ class ScrollProgressBar extends StatelessWidget {
             if (controller.hasClients &&
                 controller.position.hasContentDimensions &&
                 controller.position.maxScrollExtent > 0) {
-              progress = (controller.offset / controller.position.maxScrollExtent)
-                  .clamp(0.0, 1.0);
+              progress =
+                  (controller.offset / controller.position.maxScrollExtent)
+                      .clamp(0.0, 1.0);
             }
             return Align(
               alignment: Alignment.centerLeft,

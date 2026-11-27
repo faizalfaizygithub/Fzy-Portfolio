@@ -4,8 +4,13 @@
 abstract final class AppInfo {
   static const name = 'Muhammed Faisal V';
   static const shortName = 'Muhammed Faisal';
+  static const firstName = 'Faisal';
   static const initials = 'MF';
   static const role = 'Flutter Developer';
+  static const roleDetail = 'Mobile & Web';
+
+  /// Portrait used in the hero and about sections (white background).
+  static const portrait = 'assets/images/profile/portrait.jpg';
   static const experience = '2.4';
   static const location = 'Calicut, Kerala, India';
   static const email = 'faizalfaizy648@gmail.com';

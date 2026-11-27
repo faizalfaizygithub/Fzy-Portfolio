@@ -29,7 +29,7 @@ class GlowCard extends StatelessWidget {
 
   /// Optional hook to vary the child with hover state.
   final Widget Function(BuildContext context, bool hovered, Widget child)?
-      builder;
+  builder;
 
   @override
   Widget build(BuildContext context) {

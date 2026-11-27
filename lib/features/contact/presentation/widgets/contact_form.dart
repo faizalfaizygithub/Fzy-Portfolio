@@ -39,13 +39,13 @@ class _ContactFormState extends State<ContactForm> {
       return;
     }
     final sent = await context.read<ContactProvider>().submit(
-          ContactMessage(
-            name: _name.text.trim(),
-            email: _email.text.trim(),
-            subject: _subject.text.trim(),
-            message: _message.text.trim(),
-          ),
-        );
+      ContactMessage(
+        name: _name.text.trim(),
+        email: _email.text.trim(),
+        subject: _subject.text.trim(),
+        message: _message.text.trim(),
+      ),
+    );
     // Only clear the form after confirmed delivery; on failure the user
     // keeps what they typed.
     if (sent && mounted) {
@@ -59,7 +59,9 @@ class _ContactFormState extends State<ContactForm> {
 
   @override
   Widget build(BuildContext context) {
-    final status = context.select<ContactProvider, ContactStatus>((p) => p.status);
+    final status = context.select<ContactProvider, ContactStatus>(
+      (p) => p.status,
+    );
     final sending = status == ContactStatus.sending;
 
     return AnimatedSwitcher(
@@ -102,7 +104,11 @@ class _ContactFormState extends State<ContactForm> {
                         );
                         if (constraints.maxWidth < 520) {
                           return Column(
-                            children: [name, const SizedBox(height: AppSpacing.md), email],
+                            children: [
+                              name,
+                              const SizedBox(height: AppSpacing.md),
+                              email,
+                            ],
                           );
                         }
                         return Row(
@@ -140,9 +146,12 @@ class _ContactFormState extends State<ContactForm> {
                       curve: AppCurves.smooth,
                       child: status == ContactStatus.failure
                           ? Padding(
-                              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                              padding: const EdgeInsets.only(
+                                bottom: AppSpacing.md,
+                              ),
                               child: _ErrorBanner(
-                                message: context.read<ContactProvider>().error ??
+                                message:
+                                    context.read<ContactProvider>().error ??
                                     'Your message couldn\'t be sent.',
                               ),
                             )
@@ -197,7 +206,8 @@ class _Field extends StatelessWidget {
       keyboardType: keyboard,
       textInputAction: action,
       autofillHints: autofill,
-      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary),
+      style: Theme.of(context).textTheme.bodyMedium
+          ?.copyWith(color: AppColors.textPrimary),
       decoration: InputDecoration(
         labelText: label,
         alignLabelWithHint: maxLines > 1,
@@ -232,13 +242,22 @@ class _ErrorBanner extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 20),
+            const Icon(
+              Icons.error_outline_rounded,
+              color: AppColors.error,
+              size: 20,
+            ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(message, style: theme.bodyMedium?.copyWith(color: AppColors.textPrimary)),
+                  Text(
+                    message,
+                    style: theme.bodyMedium?.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.xs),
                   GestureDetector(
                     onTap: () => LinkLauncher.email(),
@@ -246,7 +265,10 @@ class _ErrorBanner extends StatelessWidget {
                       cursor: SystemMouseCursors.click,
                       child: Text(
                         'Email me directly →',
-                        style: theme.labelLarge?.copyWith(color: AppColors.highlight, fontSize: 13.5),
+                        style: theme.labelLarge?.copyWith(
+                          color: AppColors.highlight,
+                          fontSize: 13.5,
+                        ),
                       ),
                     ),
                   ),
@@ -278,20 +300,31 @@ class _SuccessView extends StatelessWidget {
               tween: Tween(begin: 0, end: 1),
               duration: AppDurations.slow,
               curve: Curves.elasticOut,
-              builder: (context, t, child) => Transform.scale(scale: t, child: child),
+              builder: (context, t, child) =>
+                  Transform.scale(scale: t, child: child),
               child: Container(
                 width: 76,
                 height: 76,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: AppColors.success.withValues(alpha: 0.12),
-                  border: Border.all(color: AppColors.success.withValues(alpha: 0.5)),
+                  border: Border.all(
+                    color: AppColors.success.withValues(alpha: 0.5),
+                  ),
                 ),
-                child: const Icon(Icons.check_rounded, color: AppColors.success, size: 38),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: AppColors.success,
+                  size: 38,
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text('Message sent!', style: theme.headlineSmall, textAlign: TextAlign.center),
+            Text(
+              'Message sent!',
+              style: theme.headlineSmall,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               'Thanks for reaching out. I\'ll get back to you as soon as I can.',

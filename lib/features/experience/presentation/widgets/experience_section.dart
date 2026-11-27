@@ -1,261 +1,302 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimens.dart';
 import '../../../../core/responsive/responsive.dart';
-import '../../../../core/widgets/glow_card.dart';
-import '../../../../core/widgets/section_container.dart';
-import '../../../../core/widgets/section_header.dart';
-import '../../../../core/widgets/tag_chip.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/editorial.dart';
+import '../../../../shared/animations/hover_builder.dart';
+import '../../../../shared/animations/line_reveal.dart';
 import '../../../../shared/animations/reveal.dart';
-import '../../../../shared/animations/scroll_aware.dart';
-import '../../../home/presentation/providers/navigation_provider.dart';
 import '../../data/experience_data.dart';
 
-/// The line "draws" down to this fraction of the viewport height.
-const _drawLine = 0.65;
-
+/// Experience as big editorial rows. Hover wipes a cream panel up behind the
+/// row and inverts it; tapping expands what I did there.
 class ExperienceSection extends StatelessWidget {
   const ExperienceSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.read<NavigationProvider>().scrollController;
-    final railWidth = context.responsive<double>(mobile: 28, desktop: 56);
-    final reduce = context.reduceMotion;
-
-    return SectionContainer(
+    final items = ExperienceData.items;
+    return Section(
+      top: 0,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SectionHeader(
-            index: '03',
-            eyebrow: 'Experience',
-            title: 'Where I\'ve Worked',
-            subtitle: 'Building and shipping Flutter apps in product teams.',
-          ),
-          const SizedBox(height: AppSpacing.xxl),
-          Stack(
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.end,
+            runSpacing: AppSpacing.lg,
+            spacing: AppSpacing.xl,
             children: [
-              // Timeline rail: a dim track with a gradient line that grows as
-              // the reader scrolls through the section.
-              Positioned(
-                left: railWidth / 2 - 1,
-                top: 8,
-                bottom: 0,
-                width: 2,
-                child: ScrollAware<double>(
-                  controller: controller,
-                  initial: reduce ? 1 : 0,
-                  compute: (top, height, viewport) => reduce
-                      ? 1
-                      : (((viewport * _drawLine - top) / height).clamp(0.0, 1.0) * 100)
-                              .roundToDouble() /
-                          100,
-                  builder: (context, progress) => Stack(
-                    children: [
-                      const Positioned.fill(child: ColoredBox(color: AppColors.border)),
-                      Align(
-                        alignment: Alignment.topCenter,
-                        child: FractionallySizedBox(
-                          heightFactor: progress,
-                          child: const DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [AppColors.highlight, AppColors.primary, AppColors.secondary],
-                              ),
-                              boxShadow: [BoxShadow(color: AppColors.primary, blurRadius: 10)],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
               Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  for (var i = 0; i < ExperienceData.items.length; i++)
-                    Padding(
-                      padding: EdgeInsets.only(
-                        bottom: i == ExperienceData.items.length - 1 ? 0 : AppSpacing.xl,
-                      ),
-                      child: _TimelineEntry(
-                        experience: ExperienceData.items[i],
-                        railWidth: railWidth,
-                        controller: controller,
-                      ),
-                    ),
+                  const SectionLabel('Experience', index: '02'),
+                  const SizedBox(height: AppSpacing.lg),
+                  LineReveal(
+                    lines: const ["Where I've been", 'building lately.'],
+                    lineColors: const [null, AppColors.textMuted],
+                    style: AppTypography.display(fluid(context, 36, 64)),
+                  ),
                 ],
+              ),
+              Reveal(
+                child: Text(
+                  '${items.length.toString().padLeft(2, '0')} ROLES — TAP TO EXPAND',
+                  style: AppTypography.eyebrow(color: AppColors.textMuted),
+                ),
               ),
             ],
           ),
+          SizedBox(height: fluid(context, 40, 64)),
+          const HairlineDivider(),
+          for (var i = 0; i < items.length; i++)
+            Reveal.staggered(
+              index: i,
+              offset: const Offset(0, 0.2),
+              child: _ExperienceRow(index: i, item: items[i]),
+            ),
         ],
       ),
     );
   }
 }
 
-class _TimelineEntry extends StatelessWidget {
-  const _TimelineEntry({
-    required this.experience,
-    required this.railWidth,
-    required this.controller,
-  });
+class _ExperienceRow extends StatefulWidget {
+  const _ExperienceRow({required this.index, required this.item});
 
-  final Experience experience;
-  final double railWidth;
-  final ScrollController controller;
+  final int index;
+  final Experience item;
+
+  @override
+  State<_ExperienceRow> createState() => _ExperienceRowState();
+}
+
+class _ExperienceRowState extends State<_ExperienceRow> {
+  late bool _open = widget.index == 0;
 
   @override
   Widget build(BuildContext context) {
-    final gap = context.responsive<double>(mobile: AppSpacing.md, desktop: AppSpacing.lg);
-    final reduce = context.reduceMotion;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: railWidth,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 30),
-            child: ScrollAware<bool>(
-              controller: controller,
-              initial: reduce,
-              compute: (top, _, viewport) => reduce || top < viewport * _drawLine,
-              builder: (context, active) => _TimelineDot(active: active),
+    final item = widget.item;
+    final wide = !context.isMobile;
+
+    return HoverBuilder(
+      onTap: () => setState(() => _open = !_open),
+      semanticLabel:
+          '${item.company}, ${item.role}. ${_open ? 'Collapse' : 'Expand'}',
+      builder: (context, hovered) {
+        final ink = hovered ? AppColors.textInverse : AppColors.textPrimary;
+        final sub = hovered ? const Color(0xFF4A4A4A) : AppColors.textSecondary;
+
+        final title = Text(
+          item.company,
+          style: AppTypography.heading(
+            TextStyle(
+              fontSize: fluid(context, 24, 44),
+              height: 1.1,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -1.2,
+              color: ink,
             ),
           ),
-        ),
-        SizedBox(width: gap),
-        Expanded(
-          child: Reveal(
-            offset: const Offset(0.04, 0),
-            child: _ExperienceCard(experience: experience),
+        );
+        final meta = Text(
+          '${item.role} · ${item.location}',
+          style: AppTypography.body(TextStyle(fontSize: 15, color: sub)),
+        );
+        final period = Text(
+          item.period.toUpperCase(),
+          style: AppTypography.eyebrow(color: sub),
+        );
+
+        return Container(
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppColors.borderStrong)),
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TimelineDot extends StatelessWidget {
-  const _TimelineDot({required this.active});
-
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: AnimatedContainer(
-        duration: AppDurations.medium,
-        curve: AppCurves.emphasized,
-        width: active ? 18 : 12,
-        height: active ? 18 : 12,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: active ? AppColors.highlight : AppColors.background,
-          border: Border.all(
-            color: active ? AppColors.textPrimary : AppColors.border,
-            width: active ? 3 : 2,
-          ),
-          boxShadow: active
-              ? [
-                  BoxShadow(color: AppColors.primary.withValues(alpha: 0.9), blurRadius: 18, spreadRadius: 2),
-                ]
-              : null,
-        ),
-      ),
-    );
-  }
-}
-
-class _ExperienceCard extends StatelessWidget {
-  const _ExperienceCard({required this.experience});
-
-  final Experience experience;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context).textTheme;
-    final wide = !context.isMobile;
-    final columns = context.isDesktop ? 2 : 1;
-
-    final meta = Wrap(
-      spacing: AppSpacing.xs,
-      runSpacing: AppSpacing.xs,
-      children: [
-        TagChip(experience.period, icon: Icons.calendar_today_rounded),
-        TagChip(experience.location, icon: Icons.location_on_outlined),
-      ],
-    );
-
-    return GlowCard(
-      padding: EdgeInsets.all(wide ? AppSpacing.xl : AppSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Stack(
             children: [
-              Expanded(
+              // Cream wipe.
+              Positioned.fill(
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: AnimatedFractionallySizedBox(
+                    duration: const Duration(milliseconds: 550),
+                    curve: AppCurves.inOut,
+                    heightFactor: hovered ? 1 : 0,
+                    widthFactor: 1,
+                    child: const ColoredBox(color: AppColors.cream),
+                  ),
+                ),
+              ),
+              AnimatedPadding(
+                duration: const Duration(milliseconds: 550),
+                curve: AppCurves.inOut,
+                padding: EdgeInsets.symmetric(
+                  vertical: fluid(context, 24, 36),
+                  horizontal: hovered ? fluid(context, 16, 28) : 0,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Wrap(
-                      spacing: AppSpacing.sm,
-                      runSpacing: AppSpacing.xs,
-                      crossAxisAlignment: WrapCrossAlignment.center,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text(experience.role, style: theme.headlineSmall),
-                        if (experience.current)
-                          const TagChip('Current', accent: AppColors.success),
+                        SizedBox(
+                          width: wide ? 72 : 44,
+                          child: Text(
+                            (widget.index + 1).toString().padLeft(2, '0'),
+                            style: AppTypography.numeric(
+                              TextStyle(
+                                fontSize: wide ? 28 : 22,
+                                fontWeight: FontWeight.w600,
+                                color: hovered
+                                    ? AppColors.textInverse
+                                    : AppColors.textMuted,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Flexible(child: title),
+                                  if (item.current) ...[
+                                    const SizedBox(width: 14),
+                                    _NowBadge(inverse: hovered),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              meta,
+                              if (!wide) ...[const SizedBox(height: 8), period],
+                            ],
+                          ),
+                        ),
+                        if (wide) ...[const SizedBox(width: 24), period],
+                        const SizedBox(width: 20),
+                        AnimatedRotation(
+                          duration: AppDurations.medium,
+                          curve: AppCurves.spring,
+                          turns: _open ? 0.125 : 0,
+                          child: Icon(Icons.add_rounded, color: ink, size: 26),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      experience.company,
-                      style: theme.titleMedium?.copyWith(color: AppColors.highlight),
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 600),
+                      curve: AppCurves.inOut,
+                      alignment: Alignment.topCenter,
+                      child: _open
+                          ? Padding(
+                              padding: EdgeInsets.only(
+                                top: AppSpacing.lg,
+                                left: wide ? 72 : 0,
+                              ),
+                              child: _Responsibilities(
+                                items: item.responsibilities,
+                                ink: ink,
+                                sub: sub,
+                                columns: context.isDesktop ? 2 : 1,
+                              ),
+                            )
+                          : const SizedBox(width: double.infinity),
                     ),
                   ],
                 ),
               ),
-              if (wide) ...[const SizedBox(width: AppSpacing.md), meta],
             ],
           ),
-          if (!wide) ...[const SizedBox(height: AppSpacing.md), meta],
-          const SizedBox(height: AppSpacing.lg),
-          const Divider(height: 1),
-          const SizedBox(height: AppSpacing.lg),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final itemWidth =
-                  (constraints.maxWidth - AppSpacing.lg * (columns - 1)) / columns;
-              return Wrap(
-                spacing: AppSpacing.lg,
-                runSpacing: AppSpacing.sm,
-                children: [
-                  for (final r in experience.responsibilities)
+        );
+      },
+    );
+  }
+}
+
+class _Responsibilities extends StatelessWidget {
+  const _Responsibilities({
+    required this.items,
+    required this.ink,
+    required this.sub,
+    required this.columns,
+  });
+
+  final List<String> items;
+  final Color ink;
+  final Color sub;
+  final int columns;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        final w = (c.maxWidth - 32 * (columns - 1)) / columns;
+        return Wrap(
+          spacing: 32,
+          runSpacing: 12,
+          children: [
+            for (var i = 0; i < items.length; i++)
+              SizedBox(
+                width: w,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     SizedBox(
-                      width: itemWidth,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.only(top: 4),
-                            child: Icon(Icons.arrow_right_alt_rounded, size: 16, color: AppColors.highlight),
-                          ),
-                          const SizedBox(width: AppSpacing.xs),
-                          Expanded(child: Text(r, style: theme.bodyMedium)),
-                        ],
+                      width: 34,
+                      child: Text(
+                        (i + 1).toString().padLeft(2, '0'),
+                        style: AppTypography.eyebrow(color: sub, size: 11),
                       ),
                     ),
-                ],
-              );
-            },
+                    Expanded(
+                      child: Text(
+                        items[i],
+                        style: AppTypography.body(
+                          TextStyle(fontSize: 15, height: 1.5, color: ink),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _NowBadge extends StatelessWidget {
+  const _NowBadge({required this.inverse});
+
+  final bool inverse;
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = inverse ? AppColors.textInverse : AppColors.textPrimary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: AppRadius.button,
+        border: Border.all(color: fg.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.success,
+            ),
           ),
+          const SizedBox(width: 6),
+          Text('NOW', style: AppTypography.eyebrow(color: fg, size: 10.5)),
         ],
       ),
     );

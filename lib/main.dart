@@ -10,8 +10,9 @@ void main() {
   usePathUrlStrategy();
 
   // Scroll-triggered reveals react faster than the 500ms default.
-  VisibilityDetectorController.instance.updateInterval =
-      const Duration(milliseconds: 80);
+  VisibilityDetectorController.instance.updateInterval = const Duration(
+    milliseconds: 80,
+  );
 
   runApp(const PortfolioApp());
 }

@@ -61,8 +61,9 @@ abstract final class AppTheme {
         ),
         hintStyle: textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
         labelStyle: textTheme.labelMedium,
-        floatingLabelStyle:
-            textTheme.labelMedium?.copyWith(color: AppColors.highlight),
+        floatingLabelStyle: textTheme.labelMedium?.copyWith(
+          color: AppColors.highlight,
+        ),
         errorStyle: textTheme.bodySmall?.copyWith(color: AppColors.error),
         border: border(AppColors.border),
         enabledBorder: border(AppColors.border),

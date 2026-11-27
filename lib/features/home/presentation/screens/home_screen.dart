@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimens.dart';
 import '../../../../core/constants/app_sections.dart';
 import '../../../../core/responsive/responsive.dart';
 import '../../../../shared/widgets/back_to_top_button.dart';
 import '../../../../shared/widgets/custom_cursor.dart';
+import '../../../../shared/widgets/preloader.dart';
 import '../../../../shared/widgets/scroll_progress_bar.dart';
 import '../../../about/presentation/widgets/about_section.dart';
 import '../../../contact/presentation/widgets/contact_section.dart';
@@ -13,8 +15,11 @@ import '../../../education/presentation/widgets/education_section.dart';
 import '../../../experience/presentation/widgets/experience_section.dart';
 import '../../../expertise/presentation/widgets/expertise_section.dart';
 import '../../../footer/presentation/widgets/footer_section.dart';
+import '../../../process/presentation/widgets/process_section.dart';
 import '../../../projects/presentation/widgets/projects_section.dart';
 import '../../../skills/presentation/widgets/skills_section.dart';
+import '../../../skills/presentation/widgets/tech_marquee.dart';
+import '../providers/intro_controller.dart';
 import '../providers/navigation_provider.dart';
 import '../widgets/hero/hero_section.dart';
 import '../widgets/nav_bar.dart';
@@ -25,18 +30,36 @@ class HomeScreen extends StatefulWidget {
   /// Section to scroll to after loading (from `/?section=...`).
   final AppSection? initialSection;
 
+  /// The preloader plays once per app session, not on every return home.
+  static bool _introPlayed = false;
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
   final _nav = NavigationProvider();
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  late final _intro = IntroController(
+    done:
+        HomeScreen._introPlayed ||
+        (widget.initialSection != null &&
+            widget.initialSection != AppSection.home),
+  );
+  late bool _showPreloader = !_intro.done;
 
   @override
   void initState() {
     super.initState();
     _scrollToInitial(widget.initialSection);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (context.reduceMotion && _showPreloader) {
+      _showPreloader = false;
+      _intro.finish();
+    }
   }
 
   @override
@@ -64,6 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _nav.dispose();
+    _intro.dispose();
     super.dispose();
   }
 
@@ -72,11 +96,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: _nav,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: _nav),
+        ChangeNotifierProvider.value(value: _intro),
+      ],
       child: Scaffold(
-        key: _scaffoldKey,
-        endDrawer: context.isDesktop ? null : const NavDrawer(),
+        backgroundColor: AppColors.background,
         body: CustomCursorOverlay(
           child: Stack(
             children: [
@@ -86,27 +112,26 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _section(AppSection.home, const HeroSection()),
+                    const TechMarquee(),
                     _section(AppSection.about, const AboutSection()),
-                    _section(AppSection.skills, const SkillsSection()),
                     _section(AppSection.experience, const ExperienceSection()),
                     _section(AppSection.projects, const ProjectsSection()),
+                    _section(AppSection.process, const ProcessSection()),
                     _section(AppSection.expertise, const ExpertiseSection()),
+                    _section(AppSection.skills, const SkillsSection()),
                     _section(AppSection.education, const EducationSection()),
                     _section(AppSection.contact, const ContactSection()),
                     FooterSection(onNavigate: _nav.scrollTo),
                   ],
                 ),
               ),
-              Positioned(
+              if (!context.isDesktop)
+                const Positioned.fill(child: MenuOverlay()),
+              const Positioned(
                 top: 0,
                 left: 0,
                 right: 0,
-                child: SafeArea(
-                  bottom: false,
-                  child: NavBar(
-                    onOpenMenu: () => _scaffoldKey.currentState?.openEndDrawer(),
-                  ),
-                ),
+                child: SafeArea(bottom: false, child: NavBar()),
               ),
               Positioned(
                 top: 0,
@@ -118,13 +143,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 right: context.responsive<double>(mobile: 16, desktop: 32),
                 bottom: context.responsive<double>(mobile: 16, desktop: 32),
                 child: Selector<NavigationProvider, bool>(
-                  selector: (_, n) => n.showBackToTop,
+                  selector: (_, n) => n.showBackToTop && !n.menuOpen,
                   builder: (context, visible, _) => BackToTopButton(
                     visible: visible,
                     onTap: _nav.scrollToTop,
                   ),
                 ),
               ),
+              if (_showPreloader)
+                Positioned.fill(
+                  child: Preloader(
+                    onReveal: () {
+                      HomeScreen._introPlayed = true;
+                      _intro.finish();
+                    },
+                    onFinished: () {
+                      if (mounted) setState(() => _showPreloader = false);
+                    },
+                  ),
+                ),
             ],
           ),
         ),

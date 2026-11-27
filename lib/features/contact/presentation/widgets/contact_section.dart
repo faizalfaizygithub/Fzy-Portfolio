@@ -1,198 +1,207 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimens.dart';
 import '../../../../core/constants/app_info.dart';
 import '../../../../core/responsive/responsive.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/utils/link_launcher.dart';
-import '../../../../core/widgets/ambient_glow.dart';
-import '../../../../core/widgets/gradient_text.dart';
-import '../../../../core/widgets/section_container.dart';
+import '../../../../core/widgets/editorial.dart';
 import '../../../../shared/animations/hover_builder.dart';
+import '../../../../shared/animations/line_reveal.dart';
+import '../../../../shared/animations/magnetic.dart';
 import '../../../../shared/animations/reveal.dart';
 import 'contact_form.dart';
 
+/// Closing call to action: a large spotlight panel with a huge headline,
+/// direct contact links and the message form.
 class ContactSection extends StatelessWidget {
   const ContactSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context).textTheme;
     final wide = context.isDesktop;
-    final titleStyle = context.responsive(
-      mobile: theme.headlineMedium!.copyWith(fontSize: 36, height: 1.1),
-      tablet: theme.displaySmall,
-      desktop: theme.displayMedium,
-    );
+    final pad = fluid(context, 24, 64);
 
     final intro = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Reveal(child: Text('// 07 — CONTACT', style: theme.labelSmall)),
-        const SizedBox(height: AppSpacing.md),
+        const SectionLabel('Contact', index: '08'),
+        const SizedBox(height: AppSpacing.lg),
+        LineReveal(
+          lines: const ["Let's build", 'something real.'],
+          lineColors: const [null, AppColors.textSecondary],
+          style: AppTypography.display(fluid(context, 44, 96)),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        Reveal(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 460),
+            child: Text(
+              'Have an app idea, a Figma file waiting to come alive, or a role '
+              'on your team? Send a message — I read every one.',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
         Reveal(
           delay: AppDurations.stagger,
-          child: Semantics(
-            header: true,
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  const TextSpan(text: 'Let\'s Build Something '),
-                  WidgetSpan(
-                    alignment: PlaceholderAlignment.baseline,
-                    baseline: TextBaseline.alphabetic,
-                    child: GradientText('Great', style: titleStyle),
-                  ),
-                  const TextSpan(text: ' Together.'),
-                ],
-              ),
-              style: titleStyle,
-            ),
+          child: Magnetic(
+            strength: 0.15,
+            child: _BigLink(label: AppInfo.email, onTap: LinkLauncher.email),
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
         Reveal(
           delay: AppDurations.stagger * 2,
-          child: Text(
-            'Have an exciting project, freelance opportunity, or job opportunity? Feel free to reach out. '
-            'I\'d love to connect and discuss how I can contribute.',
-            style: theme.bodyLarge,
+          child: Wrap(
+            spacing: 24,
+            runSpacing: 10,
+            children: [
+              _SmallLink('Phone · ${AppInfo.phone}', LinkLauncher.phone),
+              _SmallLink('LinkedIn', LinkLauncher.linkedIn),
+              if (AppInfo.hasGitHub) _SmallLink('GitHub', LinkLauncher.gitHub),
+              _SmallLink('Resume', LinkLauncher.downloadResume),
+            ],
           ),
         ),
-        const SizedBox(height: AppSpacing.xl),
-        for (final (i, info) in _infos.indexed)
-          Reveal.staggered(
-            index: i,
-            base: AppDurations.stagger * 3,
-            offset: const Offset(-0.05, 0),
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-              child: _ContactInfoTile(info: info),
-            ),
-          ),
       ],
     );
 
     final form = Reveal(
-      delay: AppDurations.stagger * 2,
       offset: const Offset(0, 0.06),
       child: Container(
-        padding: EdgeInsets.all(context.responsive<double>(mobile: AppSpacing.lg, desktop: AppSpacing.xl + 8)),
+        padding: EdgeInsets.all(fluid(context, 20, 32)),
         decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
+          color: AppColors.background.withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(28),
           border: Border.all(color: AppColors.border),
-          boxShadow: [
-            BoxShadow(color: AppColors.primary.withValues(alpha: 0.12), blurRadius: 60, offset: const Offset(0, 30)),
-          ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Send a message', style: theme.titleLarge),
-            const SizedBox(height: AppSpacing.xs),
-            Text('I usually reply by email.', style: theme.bodySmall),
-            const SizedBox(height: AppSpacing.lg),
-            const ContactForm(),
-          ],
-        ),
+        child: const ContactForm(),
       ),
     );
 
-    return SectionContainer(
-      background: Align(
-        alignment: const Alignment(0.8, 0.2),
-        child: AmbientGlow(color: AppColors.primary, size: wide ? 800 : 480, opacity: 0.2),
+    return Section(
+      top: 0,
+      maxWidth: 1400,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: AppColors.panelGlow,
+          borderRadius: BorderRadius.circular(fluid(context, 32, 48)),
+          border: Border.all(color: AppColors.border),
+        ),
+        padding: EdgeInsets.all(pad),
+        child: wide
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 6, child: intro),
+                  SizedBox(width: fluid(context, 32, 72)),
+                  Expanded(flex: 5, child: form),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  intro,
+                  const SizedBox(height: AppSpacing.xxl),
+                  form,
+                ],
+              ),
       ),
-      child: wide
-          ? Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(flex: 5, child: intro),
-                const SizedBox(width: AppSpacing.xxxl),
-                Expanded(flex: 6, child: form),
-              ],
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [intro, const SizedBox(height: AppSpacing.xl), form],
-            ),
     );
   }
-
-  static final _infos = <_Info>[
-    _Info(Icons.alternate_email_rounded, 'Email', AppInfo.email, LinkLauncher.email),
-    _Info(Icons.phone_rounded, 'Phone', AppInfo.phone, LinkLauncher.phone),
-    _Info(FontAwesomeIcons.linkedinIn.data, 'LinkedIn', AppInfo.linkedInLabel, LinkLauncher.linkedIn),
-    const _Info(Icons.location_on_outlined, 'Location', AppInfo.location, null),
-  ];
 }
 
-class _Info {
-  const _Info(this.icon, this.label, this.value, this.onTap);
-  final IconData icon;
+/// Email link with an underline that sweeps across on hover.
+class _BigLink extends StatelessWidget {
+  const _BigLink({required this.label, required this.onTap});
+
   final String label;
-  final String value;
-  final Future<bool> Function()? onTap;
-}
-
-class _ContactInfoTile extends StatelessWidget {
-  const _ContactInfoTile({required this.info});
-
-  final _Info info;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context).textTheme;
-    final interactive = info.onTap != null;
     return HoverBuilder(
-      onTap: interactive ? () => info.onTap!() : null,
-      semanticLabel: '${info.label}: ${info.value}',
-      builder: (context, hovered) => AnimatedContainer(
-        duration: AppDurations.fast,
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: hovered ? AppColors.card : AppColors.card.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: hovered ? AppColors.primary.withValues(alpha: 0.6) : AppColors.border),
-        ),
-        child: Row(
-          children: [
-            AnimatedContainer(
-              duration: AppDurations.fast,
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                gradient: hovered ? AppColors.brandGradient : null,
-                color: hovered ? null : AppColors.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              child: Icon(info.icon, size: 18, color: hovered ? AppColors.textPrimary : AppColors.highlight),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(info.label.toUpperCase(), style: theme.labelSmall?.copyWith(fontSize: 10.5, color: AppColors.textMuted)),
-                  const SizedBox(height: 2),
-                  Text(
-                    info.value,
-                    style: theme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+      onTap: onTap,
+      semanticLabel: 'Email $label',
+      builder: (context, hovered) => Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    label,
+                    style: AppTypography.heading(
+                      TextStyle(
+                        fontSize: fluid(context, 19, 32),
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.6,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 10),
+                AnimatedRotation(
+                  duration: AppDurations.medium,
+                  curve: AppCurves.spring,
+                  turns: hovered ? 0.125 : 0,
+                  child: const Icon(
+                    Icons.north_east_rounded,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
             ),
-            if (interactive)
-              AnimatedSlide(
-                duration: AppDurations.fast,
-                offset: hovered ? const Offset(0.2, -0.2) : Offset.zero,
-                child: Icon(Icons.north_east_rounded, size: 16, color: hovered ? AppColors.highlight : AppColors.textMuted),
-              ),
-          ],
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Stack(
+              children: [
+                Container(height: 1.5, color: AppColors.borderStrong),
+                AnimatedFractionallySizedBox(
+                  duration: const Duration(milliseconds: 600),
+                  curve: AppCurves.inOut,
+                  widthFactor: hovered ? 1 : 0,
+                  child: Container(height: 1.5, color: AppColors.textPrimary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SmallLink extends StatelessWidget {
+  const _SmallLink(this.label, this.onTap);
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return HoverBuilder(
+      onTap: onTap,
+      semanticLabel: label,
+      builder: (context, h) => Text(
+        label,
+        style: AppTypography.label(
+          TextStyle(
+            fontSize: 14.5,
+            fontWeight: FontWeight.w500,
+            color: h ? AppColors.textPrimary : AppColors.textSecondary,
+            decoration: h ? TextDecoration.underline : null,
+            decorationColor: AppColors.textPrimary,
+          ),
         ),
       ),
     );

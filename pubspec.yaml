@@ -65,6 +65,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/images/profile/
     - assets/images/projects/ealzo/
     - assets/images/projects/furnyshop/
     - assets/images/projects/washsouq/

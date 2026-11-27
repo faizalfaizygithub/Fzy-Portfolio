@@ -36,7 +36,9 @@ class BrandLogo extends StatelessWidget {
                 borderRadius: BorderRadius.circular(size * 0.3),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: hovered ? 0.6 : 0.35),
+                    color: AppColors.primary.withValues(
+                      alpha: hovered ? 0.6 : 0.35,
+                    ),
                     blurRadius: hovered ? 24 : 14,
                   ),
                 ],
@@ -48,12 +50,14 @@ class BrandLogo extends StatelessWidget {
                 turns: hovered ? -0.125 : 0,
                 child: Text(
                   AppInfo.initials,
-                  style: AppTypography.heading(TextStyle(
-                    fontSize: size * 0.4,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.5,
-                    color: AppColors.textPrimary,
-                  )),
+                  style: AppTypography.heading(
+                    TextStyle(
+                      fontSize: size * 0.4,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.5,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -62,10 +66,14 @@ class BrandLogo extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             Text(
               '</${AppInfo.initials.toLowerCase()}>',
-              style: AppTypography.mono(TextStyle(
-                fontSize: 14,
-                color: hovered ? AppColors.highlight : AppColors.textSecondary,
-              )),
+              style: AppTypography.mono(
+                TextStyle(
+                  fontSize: 14,
+                  color: hovered
+                      ? AppColors.highlight
+                      : AppColors.textSecondary,
+                ),
+              ),
             ),
           ],
         ],

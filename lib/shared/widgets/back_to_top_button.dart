@@ -5,7 +5,11 @@ import '../../core/constants/app_dimens.dart';
 import '../animations/hover_builder.dart';
 
 class BackToTopButton extends StatelessWidget {
-  const BackToTopButton({super.key, required this.visible, required this.onTap});
+  const BackToTopButton({
+    super.key,
+    required this.visible,
+    required this.onTap,
+  });
 
   final bool visible;
   final VoidCallback onTap;
@@ -39,7 +43,9 @@ class BackToTopButton extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withValues(alpha: hovered ? 0.5 : 0.2),
+                      color: AppColors.primary.withValues(
+                        alpha: hovered ? 0.5 : 0.2,
+                      ),
                       blurRadius: 20,
                     ),
                   ],

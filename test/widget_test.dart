@@ -55,9 +55,9 @@ void main() {
     testWidgets('renders every section without overflow on $label', (tester) async {
       await _pumpApp(tester, size: size);
 
-      expect(find.text('A Little About Me'), findsOneWidget);
-      expect(find.text('Technologies I Work With'), findsOneWidget);
-      expect(find.text('Beyond Writing Code'), findsOneWidget);
+      expect(find.text('Turning ideas into'), findsOneWidget);
+      expect(find.text('Tools I reach for,'), findsOneWidget);
+      expect(find.text('Code that carries'), findsOneWidget);
       expect(find.textContaining('Noviindus Technologies'), findsWidgets);
       expect(find.text('Ealzo'), findsOneWidget);
 

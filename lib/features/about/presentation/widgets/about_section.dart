@@ -1,193 +1,260 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_dimens.dart';
 import '../../../../core/constants/app_info.dart';
+import '../../../../core/constants/app_sections.dart';
 import '../../../../core/responsive/responsive.dart';
-import '../../../../core/widgets/glow_card.dart';
-import '../../../../core/widgets/gradient_text.dart';
-import '../../../../core/widgets/section_container.dart';
-import '../../../../core/widgets/section_header.dart';
-import '../../../../shared/animations/drifting_glow.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/utils/link_launcher.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/editorial.dart';
+import '../../../../shared/animations/hover_builder.dart';
+import '../../../../shared/animations/line_reveal.dart';
 import '../../../../shared/animations/reveal.dart';
+import '../../../../shared/animations/scroll_select.dart';
+import '../../../../shared/animations/scrub_text.dart';
+import '../../../../shared/widgets/rotating_badge.dart';
+import '../../../home/presentation/providers/navigation_provider.dart';
 
+/// "Behind the code": headline, a manifesto that lights up word by word as
+/// you scroll, and a portrait card.
 class AboutSection extends StatelessWidget {
   const AboutSection({super.key});
 
-  static const _paragraphs = [
-    "I'm a Flutter Developer based in Calicut, Kerala, with ${AppInfo.experience} years of experience developing cross-platform applications.",
-    'I enjoy transforming ideas and Figma designs into functional, scalable, and visually appealing applications.',
-    'My experience includes developing healthcare applications, e-commerce platforms, and real-time communication solutions.',
-    'I focus on clean code, maintainable architecture, performance optimization, and delivering quality user experiences.',
-  ];
+  static const manifesto =
+      "I'm ${AppInfo.shortName}, a Flutter developer from Calicut with "
+      '${AppInfo.experience} years of turning Figma files into production apps. '
+      'I care about the details people feel but rarely notice — the 60fps '
+      'scroll, the instant tap, the checkout that just works.';
+
+  static const body =
+      'From healthcare booking to e-commerce and real-time calling, I build '
+      'cross-platform apps with clean architecture, careful state management '
+      'and motion that has a reason to exist.';
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context).textTheme;
     final wide = context.isDesktop;
+    final headline = LineReveal(
+      lines: const ['Turning ideas into', 'apps that feel native.'],
+      lineColors: const [null, AppColors.textMuted],
+      style: AppTypography.display(fluid(context, 40, 84)),
+    );
 
-    final text = Column(
+    final copy = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(
-          index: '01',
-          eyebrow: 'About',
-          title: 'A Little About Me',
-        ),
-        const SizedBox(height: AppSpacing.xl),
-        for (var i = 0; i < _paragraphs.length; i++)
-          Reveal.staggered(
-            index: i,
-            base: AppDurations.stagger * 2,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.md),
-              child: Text(
-                _paragraphs[i],
-                style: i == 0
-                    ? theme.bodyLarge?.copyWith(color: AppColors.textPrimary, fontSize: 19)
-                    : theme.bodyLarge,
-              ),
+        ScrubText(
+          manifesto,
+          style: AppTypography.heading(
+            TextStyle(
+              fontSize: fluid(context, 21, 30),
+              height: 1.35,
+              fontWeight: FontWeight.w500,
+              letterSpacing: -0.4,
+              color: AppColors.textPrimary,
             ),
           ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        Reveal(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Text(body, style: Theme.of(context).textTheme.bodyLarge),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        Reveal(
+          delay: AppDurations.stagger,
+          child: Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              AppButton(
+                label: 'Get in touch',
+                icon: Icons.north_east_rounded,
+                onPressed: () => context.read<NavigationProvider>().scrollTo(
+                  AppSection.contact,
+                ),
+              ),
+              AppButton(
+                label: 'Download CV',
+                icon: Icons.south_rounded,
+                variant: AppButtonVariant.outline,
+                onPressed: LinkLauncher.downloadResume,
+              ),
+            ],
+          ),
+        ),
       ],
     );
 
-    return SectionContainer(
-      background: DriftingGlow(
-        color: AppColors.secondary,
-        size: context.responsive<double>(mobile: 420, desktop: 720),
-        from: const Alignment(1.1, -0.8),
-        to: const Alignment(0.5, 0.6),
-      ),
-      child: wide
-          ? Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+    return Section(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: SectionLabel('Behind the code', index: '01'),
+              ),
+              if (!context.isMobile)
+                Text(
+                  AppInfo.location.toUpperCase(),
+                  style: AppTypography.eyebrow(color: AppColors.textMuted),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          headline,
+          SizedBox(height: fluid(context, 48, 96)),
+          if (wide)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(flex: 6, child: text),
-                const SizedBox(width: AppSpacing.xxxl),
-                const Expanded(flex: 5, child: _HighlightGrid()),
+                const Expanded(flex: 5, child: _PortraitCard()),
+                SizedBox(width: fluid(context, 40, 96)),
+                Expanded(
+                  flex: 7,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 24),
+                    child: copy,
+                  ),
+                ),
               ],
             )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                text,
-                const SizedBox(height: AppSpacing.xl),
-                const _HighlightGrid(),
-              ],
+          else ...[
+            copy,
+            const SizedBox(height: AppSpacing.xxl),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 460),
+              child: const _PortraitCard(),
             ),
-    );
-  }
-}
-
-class _Highlight {
-  const _Highlight(this.icon, this.title, this.body, {this.figure});
-  final IconData icon;
-  final String title;
-  final String body;
-  final String? figure;
-}
-
-class _HighlightGrid extends StatelessWidget {
-  const _HighlightGrid();
-
-  static const _items = [
-    _Highlight(
-      Icons.workspace_premium_rounded,
-      'Years Experience',
-      'Building production Flutter apps professionally.',
-      figure: '${AppInfo.experience}+',
-    ),
-    _Highlight(
-      Icons.devices_rounded,
-      'Cross-Platform Development',
-      'Android and iOS apps from a single Flutter codebase.',
-    ),
-    _Highlight(
-      Icons.category_rounded,
-      'Multiple Application Domains',
-      'Healthcare, e-commerce and real-time communication.',
-    ),
-    _Highlight(
-      Icons.all_inclusive_rounded,
-      'End-to-End App Development',
-      'From Figma designs to Play Store and App Store releases.',
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = constraints.maxWidth > 440 ? 2 : 1;
-        final width = (constraints.maxWidth - AppSpacing.md * (columns - 1)) / columns;
-        return Wrap(
-          spacing: AppSpacing.md,
-          runSpacing: AppSpacing.md,
-          children: [
-            for (var i = 0; i < _items.length; i++)
-              SizedBox(
-                width: width,
-                child: Reveal.staggered(
-                  index: i,
-                  scaleFrom: 0.94,
-                  child: _HighlightCard(item: _items[i]),
-                ),
-              ),
           ],
-        );
-      },
+        ],
+      ),
     );
   }
 }
 
-class _HighlightCard extends StatelessWidget {
-  const _HighlightCard({required this.item});
+/// Grayscale portrait that blooms into colour on hover, drifting inside its
+/// frame as the page scrolls.
+class _PortraitCard extends StatelessWidget {
+  const _PortraitCard();
 
-  final _Highlight item;
+  static const _grayscale = ColorFilter.matrix([
+    0.2126, 0.7152, 0.0722, 0, 0, //
+    0.2126, 0.7152, 0.0722, 0, 0, //
+    0.2126, 0.7152, 0.0722, 0, 0, //
+    0, 0, 0, 1, 0,
+  ]);
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context).textTheme;
-    return GlowCard(
-      child: const SizedBox.shrink(),
-      builder: (context, hovered, _) => ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 176),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final motion = !context.reduceMotion;
+    return Reveal(
+      scaleFrom: 0.94,
+      child: AspectRatio(
+        aspectRatio: 4 / 5,
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            if (item.figure != null)
-              GradientText(
-                item.figure!,
-                style: theme.displaySmall?.copyWith(fontSize: 42, height: 1),
-              )
-            else
-              AnimatedContainer(
-                duration: AppDurations.medium,
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  gradient: hovered ? AppColors.brandGradient : null,
-                  color: hovered ? null : AppColors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(AppRadius.sm + 2),
-                ),
-                child: AnimatedRotation(
-                  duration: AppDurations.medium,
-                  turns: hovered ? 0.05 : 0,
-                  child: Icon(
-                    item.icon,
-                    size: 22,
-                    color: hovered ? AppColors.textPrimary : AppColors.highlight,
+            Positioned.fill(
+              child: HoverBuilder(
+                cursor: SystemMouseCursors.basic,
+                builder: (context, hovered) => ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: ColoredBox(
+                    color: AppColors.paper,
+                    child: ScrollSelect<double>(
+                      initial: 0.5,
+                      select: (m) => quantize(m.passThrough, 300),
+                      builder: (context, p, child) => Transform.translate(
+                        offset: Offset(0, motion ? (p - 0.5) * -60 : 0),
+                        child: AnimatedScale(
+                          duration: const Duration(milliseconds: 900),
+                          curve: AppCurves.out,
+                          scale: hovered ? 1.12 : 1.06,
+                          child: child,
+                        ),
+                      ),
+                      child: _ColorBloom(
+                        hovered: hovered,
+                        grayscale: _grayscale,
+                        child: Image.asset(
+                          AppInfo.portrait,
+                          fit: BoxFit.cover,
+                          alignment: const Alignment(0, -0.6),
+                          semanticLabel: 'Portrait of ${AppInfo.name}',
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            const SizedBox(height: AppSpacing.md),
-            Text(item.title, style: theme.titleMedium),
-            const SizedBox(height: AppSpacing.xs),
-            Text(item.body, style: theme.bodySmall),
+            ),
+            Positioned(
+              left: 18,
+              bottom: 18,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.background.withValues(alpha: 0.82),
+                  borderRadius: AppRadius.button,
+                ),
+                child: Text(
+                  '( ${AppInfo.role.toUpperCase()} )',
+                  style: AppTypography.eyebrow(
+                    color: AppColors.textPrimary,
+                    size: 11,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              right: -18,
+              top: -18,
+              child: RotatingBadge(
+                text: ' FLUTTER DEVELOPER • BASED IN KERALA •',
+                size: fluid(context, 104, 132),
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ColorBloom extends StatelessWidget {
+  const _ColorBloom({
+    required this.hovered,
+    required this.grayscale,
+    required this.child,
+  });
+
+  final bool hovered;
+  final ColorFilter grayscale;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        ColorFiltered(colorFilter: grayscale, child: child),
+        AnimatedOpacity(
+          duration: const Duration(milliseconds: 700),
+          curve: AppCurves.out,
+          opacity: hovered ? 1 : 0,
+          child: child,
+        ),
+      ],
     );
   }
 }

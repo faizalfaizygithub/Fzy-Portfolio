@@ -13,8 +13,7 @@ abstract final class ProjectsLocalDataSource {
       number: '01',
       name: 'Ealzo',
       category: 'Healthcare · Doctor Booking',
-      summary:
-          'A doctor booking application that helps users discover doctors and book appointments.',
+      summary: 'A doctor booking application that helps users discover doctors and book appointments.',
       overview:
           'Ealzo is a doctor booking application that helps users discover doctors and book appointments. '
           'My work focused on the discovery and booking journey: finding doctors by specialty or location, '
@@ -59,8 +58,7 @@ abstract final class ProjectsLocalDataSource {
       number: '02',
       name: 'Furnyshop',
       category: 'E-commerce · Furniture Shopping',
-      summary:
-          'A furniture e-commerce application designed for smooth product browsing and shopping.',
+      summary: 'A furniture e-commerce application designed for smooth product browsing and shopping.',
       overview:
           'Furnyshop is a furniture e-commerce application designed to provide a smooth product browsing '
           'and shopping experience, from exploring the catalog to completing checkout.',
@@ -102,8 +100,7 @@ abstract final class ProjectsLocalDataSource {
       number: '03',
       name: 'Mindiko',
       category: 'Real-Time Communication',
-      summary:
-          'A real-time communication application with audio and video calling capabilities.',
+      summary: 'A real-time communication application with audio and video calling capabilities.',
       overview:
           'Mindiko is a real-time communication application with audio and video calling capabilities, '
           'backed by push notifications so calls and messages reach users even when the app is in the background.',
@@ -129,8 +126,7 @@ abstract final class ProjectsLocalDataSource {
       number: '04',
       name: 'Washsouq',
       category: 'Car Wash Booking · Saudi Arabia',
-      summary:
-          'A car wash marketplace app to find nearby car washes, compare offers and book in advance.',
+      summary: 'A car wash marketplace app to find nearby car washes, compare offers and book in advance.',
       overview:
           'Washsouq is a Saudi Arabia based car wash booking app. Customers pick their vehicle and location, '
           'find nearby car washes sorted by offers or rating, apply coupons, add extra services at checkout '
@@ -174,8 +170,7 @@ abstract final class ProjectsLocalDataSource {
       number: '05',
       name: 'ShareTok',
       category: 'Communication · Social Application',
-      summary:
-          'A social communication application with real-time audio/video communication and social sharing.',
+      summary: 'A social communication application with real-time audio/video communication and social sharing.',
       overview:
           'ShareTok is a social communication application featuring real-time audio/video communication '
           'and social-sharing functionality.',

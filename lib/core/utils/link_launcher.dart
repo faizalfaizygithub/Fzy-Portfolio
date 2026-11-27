@@ -3,7 +3,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../constants/app_info.dart';
 import 'file_download_stub.dart'
-    if (dart.library.js_interop) 'file_download_web.dart' as download;
+    if (dart.library.js_interop) 'file_download_web.dart'
+    as download;
 
 abstract final class LinkLauncher {
   static Future<bool> open(String url) async {
@@ -25,7 +26,9 @@ abstract final class LinkLauncher {
   }
 
   static Future<bool> email({String? subject}) {
-    final query = subject == null ? '' : '?subject=${Uri.encodeComponent(subject)}';
+    final query = subject == null
+        ? ''
+        : '?subject=${Uri.encodeComponent(subject)}';
     return open('${AppInfo.emailUri}$query');
   }
 

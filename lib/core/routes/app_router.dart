@@ -31,8 +31,7 @@ GoRouter createRouter() {
         ],
       ),
     ],
-    errorPageBuilder: (context, state) =>
-        _fadePage(state, const HomeScreen()),
+    errorPageBuilder: (context, state) => _fadePage(state, const HomeScreen()),
   );
 }
 
@@ -45,13 +44,14 @@ CustomTransitionPage<void> _fadePage(GoRouterState state, Widget child) {
     reverseTransitionDuration: AppDurations.medium,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
       if (MediaQuery.disableAnimationsOf(context)) return child;
-      final curved =
-          animation.drive(CurveTween(curve: AppCurves.emphasized));
+      final curved = animation.drive(CurveTween(curve: AppCurves.emphasized));
       return FadeTransition(
         opacity: curved,
         child: SlideTransition(
-          position: Tween(begin: const Offset(0, 0.03), end: Offset.zero)
-              .animate(curved),
+          position: Tween(
+            begin: const Offset(0, 0.03),
+            end: Offset.zero,
+          ).animate(curved),
           child: child,
         ),
       );

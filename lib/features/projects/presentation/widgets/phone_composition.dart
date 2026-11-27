@@ -27,7 +27,13 @@ class PhoneComposition extends StatelessWidget {
     final sideWidth = mainWidth * 0.84;
     final spread = mainWidth * (hovered ? 0.74 : 0.6);
 
-    Widget phone(int variant, double width, double dx, double dy, double angle) {
+    Widget phone(
+      int variant,
+      double width,
+      double dx,
+      double dy,
+      double angle,
+    ) {
       return AnimatedContainer(
         duration: AppDurations.slow,
         curve: AppCurves.emphasized,

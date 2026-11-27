@@ -2,10 +2,11 @@
 enum AppSection {
   home('Home', inNav: true),
   about('About', inNav: true),
-  skills('Skills', inNav: true),
-  experience('Experience', inNav: true),
-  projects('Projects', inNav: true),
-  expertise('Expertise'),
+  experience('Experience'),
+  projects('Work', inNav: true),
+  process('Process', inNav: true),
+  expertise('Capabilities'),
+  skills('Stack', inNav: true),
   education('Education'),
   contact('Contact', inNav: true);
 

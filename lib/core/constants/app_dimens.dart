@@ -26,7 +26,7 @@ abstract final class AppRadius {
 }
 
 abstract final class AppSizes {
-  static const maxContentWidth = 1200.0;
+  static const maxContentWidth = 1304.0;
   static const navHeight = 72.0;
   static const navHeightMobile = 64.0;
   static const scrollProgressHeight = 2.0;
@@ -46,4 +46,13 @@ abstract final class AppCurves {
   static const emphasized = Cubic(0.2, 0.0, 0.0, 1.0);
   static const smooth = Curves.easeOutCubic;
   static const scroll = Curves.easeInOutCubic;
+
+  /// Reference-site easings.
+  static const out = Cubic(0.2, 0.8, 0.2, 1);
+  static const inOut = Cubic(0.7, 0, 0.2, 1);
+  static const spring = Cubic(0.34, 1.56, 0.64, 1);
+
+  /// GSAP `power4.out` – used for masked line reveals.
+  static const power4Out = Cubic(0.165, 0.84, 0.44, 1);
+  static const expoOut = Cubic(0.16, 1, 0.3, 1);
 }
